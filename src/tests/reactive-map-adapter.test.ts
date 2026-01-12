@@ -98,7 +98,7 @@ describe('ReactiveMapSinkAdapter', () => {
       []
     );
 
-    const source = adapter.build();
+    const { stream: source } = adapter.build();
     expect(source).toBeDefined();
     expect([...source.snapshot.getEntries()]).toEqual([]);
   });
@@ -111,11 +111,11 @@ describe('ReactiveMapSinkAdapter', () => {
       iso.id<number>(),
       []
     );
-    const source = adapter.build();
+    const { stream: source, input } = adapter.build();
 
     // Apply changes
     const change = [['a', 1, 5], ['b', 2, 10]];
-    adapter.apply(change, source);
+    adapter.apply(change, input);
 
     graph.step();
 
@@ -134,11 +134,11 @@ describe('ReactiveMapSinkAdapter', () => {
     };
 
     const adapter = new ReactiveMapSinkAdapter(graph, strToNum, strToNum, []);
-    const source = adapter.build();
+    const { stream: source, input } = adapter.build();
 
     // Apply change with string keys and values
     const change = [['5', '10', 1], ['15', '20', 2]];
-    adapter.apply(change, source);
+    adapter.apply(change, input);
 
     graph.step();
 
@@ -156,13 +156,13 @@ describe('ReactiveMapSinkAdapter', () => {
       iso.id<string>(),
       []
     );
-    const source = adapter.build();
+    const { stream: source, input } = adapter.build();
 
     // Add same key with different weights
-    adapter.apply([['key', 'value1', 5]], source);
+    adapter.apply([['key', 'value1', 5]], input);
     graph.step();
 
-    adapter.apply([['key', 'value2', 3]], source);
+    adapter.apply([['key', 'value2', 3]], input);
     graph.step();
 
     const entries = [...source.snapshot.getEntries()];
@@ -178,7 +178,7 @@ describe('sink function', () => {
 
     const snapshot = [['a', 1, 10], ['b', 2, 20]];
     const sinkAdapter = sinkFn(snapshot);
-    const source = sinkAdapter.build();
+    const { stream: source } = sinkAdapter.build();
 
     const entries = [...source.snapshot.getEntries()];
     expect(entries).toContainEqual(['a', 1, 10]);
@@ -191,7 +191,7 @@ describe('sink function', () => {
 
     const snapshot = [['x', 'y', 1]];
     const sinkAdapter = sinkFn(snapshot);
-    const source = sinkAdapter.build();
+    const { stream: source, input } = sinkAdapter.build();
 
     // Initial check
     let entries = [...source.snapshot.getEntries()];
@@ -199,7 +199,7 @@ describe('sink function', () => {
 
     // Apply a change
     const change = [['a', 'b', 2], ['c', 'd', 3]];
-    sinkAdapter.apply(change, source);
+    sinkAdapter.apply(change, input);
 
     graph.step();
 
@@ -222,7 +222,7 @@ describe('sink function', () => {
     // Snapshot with string keys and values
     const snapshot = [['10', '20', 5], ['30', '40', 10]];
     const sinkAdapter = sinkFn(snapshot);
-    const source = sinkAdapter.build();
+    const { stream: source } = sinkAdapter.build();
 
     // Should be converted to numbers
     const entries = [...source.snapshot.getEntries()];
@@ -235,7 +235,7 @@ describe('sink function', () => {
     const sinkFn = sink(graph, iso.id<string>(), iso.id<number>());
 
     const sinkAdapter = sinkFn([]);
-    const source = sinkAdapter.build();
+    const { stream: source } = sinkAdapter.build();
 
     expect([...source.snapshot.getEntries()]).toEqual([]);
   });
@@ -245,8 +245,8 @@ describe('sink function', () => {
     const sinkFn = sink(graph, iso.id<string>(), iso.id<number>());
     const sinkAdapter = sinkFn([['test', 1, 1]]);
 
-    const source1 = sinkAdapter.build();
-    const source2 = sinkAdapter.build();
+    const { stream: source1 } = sinkAdapter.build();
+    const { stream: source2 } = sinkAdapter.build();
 
     // Each build creates a new instance
     expect(source1).not.toBe(source2);
@@ -277,7 +277,7 @@ describe('sink function', () => {
     ];
 
     const sinkAdapter = sinkFn(snapshot);
-    const source = sinkAdapter.build();
+    const { stream: source } = sinkAdapter.build();
 
     const entries = [...source.snapshot.getEntries()];
     expect(entries.length).toBe(2);

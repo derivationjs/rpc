@@ -50,13 +50,13 @@ describe('StreamSinkAdapter', () => {
   it('should apply changes to a stream', () => {
     const graph = new Graph();
     const adapter = new StreamSinkAdapter(graph, iso.id<{ x: number }>(), { x: 0 });
-    const stream = adapter.build();
+    const { stream, input } = adapter.build();
 
-    adapter.apply({ x: 5 }, stream);
+    adapter.apply({ x: 5 }, input);
     graph.step();
     expect(stream.value).toEqual({ x: 5 });
 
-    adapter.apply({ x: 10 }, stream);
+    adapter.apply({ x: 10 }, input);
     graph.step();
     expect(stream.value).toEqual({ x: 10 });
   });
@@ -70,10 +70,10 @@ describe('StreamSinkAdapter', () => {
     };
 
     const adapter = new StreamSinkAdapter(graph, stringToNum, { val: '0' });
-    const stream = adapter.build();
+    const { stream, input } = adapter.build();
 
     // Apply change with string, should be converted to number
-    adapter.apply({ val: '42' }, stream);
+    adapter.apply({ val: '42' }, input);
     graph.step();
     expect(stream.value).toEqual({ val: 42 });
   });
@@ -82,8 +82,8 @@ describe('StreamSinkAdapter', () => {
     const graph = new Graph();
     const adapter = new StreamSinkAdapter(graph, iso.id<{ id: string }>(), { id: 'test' });
 
-    const stream1 = adapter.build();
-    const stream2 = adapter.build();
+    const { stream: stream1 } = adapter.build();
+    const { stream: stream2 } = adapter.build();
 
     expect(stream1).toBeDefined();
     expect(stream2).toBeDefined();
@@ -98,7 +98,7 @@ describe('sink function', () => {
 
     const snapshot = { name: 'initial' };
     const sinkAdapter = sinkFn(snapshot);
-    const stream = sinkAdapter.build();
+    const { stream } = sinkAdapter.build();
 
     expect(stream.value).toEqual({ name: 'initial' });
   });
@@ -108,15 +108,15 @@ describe('sink function', () => {
     const sinkFn = sink(graph, iso.id<{ count: number }>());
 
     const sinkAdapter = sinkFn({ count: 0 });
-    const stream = sinkAdapter.build();
+    const { stream, input } = sinkAdapter.build();
 
     expect(stream.value).toEqual({ count: 0 });
 
-    sinkAdapter.apply({ count: 5 }, stream);
+    sinkAdapter.apply({ count: 5 }, input);
     graph.step();
     expect(stream.value).toEqual({ count: 5 });
 
-    sinkAdapter.apply({ count: 10 }, stream);
+    sinkAdapter.apply({ count: 10 }, input);
     graph.step();
     expect(stream.value).toEqual({ count: 10 });
   });
@@ -131,7 +131,7 @@ describe('sink function', () => {
 
     const sinkFn = sink(graph, strToNum);
     const sinkAdapter = sinkFn({ value: '99' });
-    const stream = sinkAdapter.build();
+    const { stream } = sinkAdapter.build();
 
     // Should be converted from string to number
     expect(stream.value).toEqual({ value: 99 });
@@ -142,8 +142,8 @@ describe('sink function', () => {
     const sinkFn = sink(graph, iso.id<{ data: string }>());
     const sinkAdapter = sinkFn({ data: 'test' });
 
-    const stream1 = sinkAdapter.build();
-    const stream2 = sinkAdapter.build();
+    const { stream: stream1 } = sinkAdapter.build();
+    const { stream: stream2 } = sinkAdapter.build();
 
     // Each build creates a new instance
     expect(stream1).not.toBe(stream2);

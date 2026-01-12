@@ -3,14 +3,14 @@ import { ServerMessage } from "./server-message";
 import type { Graph } from "derivation";
 import type { Sink, StreamDefinitions, StreamSinks } from "./stream-types";
 
-function changer<T extends object>(
-  sink: Sink<T>,
-  stream: WeakRef<T>,
+function changer<T extends object, I extends object>(
+  sink: Sink<T, I>,
+  input: WeakRef<I>,
 ): (change: object) => void {
   return (change) => {
-    const s = stream.deref();
-    if (s) {
-      sink.apply(change, s);
+    const i = input.deref();
+    if (i) {
+      sink.apply(change, i);
     }
   };
 }
@@ -89,11 +89,11 @@ export class Client<Defs extends StreamDefinitions> {
     });
 
     const endpoint = this.sinks[key];
-    const sink = endpoint(snapshot);
-    const stream = sink.build();
-    const ref = new WeakRef(stream);
-    this.activeStreams.set(id, changer(sink, ref));
-    this.registry.register(stream, [id, String(key)]);
+    const sinkAdapter = endpoint(snapshot);
+    const { stream, input } = sinkAdapter.build();
+    const inputRef = new WeakRef(input);
+    this.activeStreams.set(id, changer(sinkAdapter, inputRef));
+    this.registry.register(input, [id, String(key)]);
 
     return stream;
   }

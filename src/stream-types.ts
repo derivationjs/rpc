@@ -4,23 +4,25 @@ export interface Source<ReturnType> {
   get Stream(): ReturnType;
 }
 
-export interface Sink<SinkType> {
-  apply(change: object, stream: SinkType): void;
-  build(): SinkType;
+export interface Sink<SinkType, InputType> {
+  apply(change: object, input: InputType): void;
+  build(): { stream: SinkType; input: InputType };
 }
 
 export type StreamDefinition<
   ReturnType extends object,
   SinkType extends ReturnType,
+  InputType extends object,
 > = {
   args: Record<string, unknown>;
   returnType: ReturnType;
   sinkType: SinkType;
+  inputType: InputType;
 };
 
 export type StreamDefinitions = Record<
   string,
-  StreamDefinition<object, object>
+  StreamDefinition<object, object, object>
 >;
 
 export type StreamEndpoints<Definitions extends StreamDefinitions> = {
@@ -32,5 +34,5 @@ export type StreamEndpoints<Definitions extends StreamDefinitions> = {
 export type StreamSinks<Definitions extends StreamDefinitions> = {
   [K in keyof Definitions]: (
     snapshot: object,
-  ) => Sink<Definitions[K]["sinkType"]>;
+  ) => Sink<Definitions[K]["sinkType"], Definitions[K]["inputType"]>;
 };
