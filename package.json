@@ -1,6 +1,6 @@
 {
   "name": "@derivation/rpc",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "homepage": "https://github.com/derivationjs/rpc",
   "repository": {
     "type": "git",
