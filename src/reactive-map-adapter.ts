@@ -24,9 +24,11 @@ export class ReactiveMapSourceAdapter<K, V> implements Source<ReactiveMap<K, V>>
 
 export class ReactiveMapSinkAdapter<K, V> implements Sink<ReactiveMapSource<K, V>> {
   private readonly iso: Iso<ZMap<K, V>, object>;
+  private readonly initialMap: ZMap<K, V>;
 
-  constructor(private readonly graph: Graph, keyIso: Iso<K, unknown>, valueIso: Iso<V, unknown>) {
+  constructor(private readonly graph: Graph, keyIso: Iso<K, unknown>, valueIso: Iso<V, unknown>, snapshot: object) {
     this.iso = zmap(keyIso, valueIso);
+    this.initialMap = this.iso.from(snapshot as Array<[K, V, number]>);
   }
 
   apply(change: object, stream: ReactiveMapSource<K, V>): void {
@@ -37,7 +39,7 @@ export class ReactiveMapSinkAdapter<K, V> implements Sink<ReactiveMapSource<K, V
   }
 
   build(): ReactiveMapSource<K, V> {
-    return this.graph.inputMap(new ZMap<K, V>());
+    return this.graph.inputMap(this.initialMap);
   }
 }
 
@@ -46,15 +48,7 @@ export function sink<K, V>(
   keyIso: Iso<K, unknown>,
   valueIso: Iso<V, unknown>,
 ): (snapshot: object) => Sink<ReactiveMapSource<K, V>> {
-  const wholeIso = zmap(keyIso, valueIso);
   return (snapshot: object) => {
-    const initial = wholeIso.from(snapshot as Array<[K, V, number]>);
-    const g = graph;
-    const adapter = new ReactiveMapSinkAdapter<K, V>(g, keyIso, valueIso);
-    const stream = g.inputMap(initial);
-    return {
-      apply: adapter.apply.bind(adapter),
-      build: () => stream,
-    };
+    return new ReactiveMapSinkAdapter<K, V>(graph, keyIso, valueIso, snapshot);
   };
 }

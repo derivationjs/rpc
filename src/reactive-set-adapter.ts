@@ -23,27 +23,24 @@ export class ReactiveSetSourceAdapter<T> implements Source<ReactiveSet<T>> {
 }
 
 export class ReactiveSetSinkAdapter<T> implements Sink<ReactiveSetSource<T>> {
-  constructor(private readonly graph: Graph, private readonly iso: Iso<ZSet<T>, unknown>) {}
+  private readonly initialSet: ZSet<T>;
+
+  constructor(private readonly graph: Graph, private readonly iso: Iso<ZSet<T>, unknown>, snapshot: object) {
+    this.initialSet = iso.from(snapshot as Array<[T, number]>);
+  }
 
   apply(change: object, stream: ReactiveSetSource<T>): void {
     stream.push(this.iso.from(change as Array<[unknown, number]>));
   }
 
   build(): ReactiveSetSource<T> {
-    return this.graph.inputSet(new ZSet<T>([]));
+    return this.graph.inputSet(this.initialSet);
   }
 }
 
 export function sink<T>(graph: Graph, iso: Iso<T, unknown>): (snapshot: object) => Sink<ReactiveSetSource<T>> {
   const wholeIso = compose(zset(iso), zsetToArray());
   return (snapshot: object) => {
-    const set = wholeIso.from(snapshot as Array<[T, number]>);
-    const g = graph;
-    const adapter = new ReactiveSetSinkAdapter<T>(g, wholeIso);
-    const stream = g.inputSet(set);
-    return {
-      apply: adapter.apply.bind(adapter),
-      build: () => stream,
-    };
+    return new ReactiveSetSinkAdapter<T>(graph, wholeIso, snapshot);
   };
 }

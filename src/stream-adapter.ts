@@ -25,10 +25,12 @@ export class StreamSourceAdapter<T extends object> implements Source<ReactiveVal
 export class StreamSinkAdapter<T extends object> implements Sink<Input<T>> {
   private readonly graph: Graph;
   private readonly iso: Iso<T, object>;
+  private readonly initialValue: T;
 
-  constructor(graph: Graph, iso: Iso<T, object>) {
+  constructor(graph: Graph, iso: Iso<T, object>, snapshot: object) {
     this.graph = graph;
     this.iso = iso;
+    this.initialValue = iso.from(snapshot);
   }
 
   apply(change: object, stream: Input<T>): void {
@@ -36,19 +38,12 @@ export class StreamSinkAdapter<T extends object> implements Sink<Input<T>> {
   }
 
   build(): Input<T> {
-    return this.graph.inputValue({} as T);
+    return this.graph.inputValue(this.initialValue);
   }
 }
 
 export function sink<T extends object>(graph: Graph, iso: Iso<T, object>): (snapshot: object) => Sink<Input<T>> {
   return (snapshot: object) => {
-    const g = graph;
-    const adapter = new StreamSinkAdapter<T>(g, iso);
-    const initialValue = iso.from(snapshot);
-    const input = g.inputValue(initialValue);
-    return {
-      apply: adapter.apply.bind(adapter),
-      build: () => input,
-    };
+    return new StreamSinkAdapter<T>(graph, iso, snapshot);
   };
 }

@@ -9,18 +9,28 @@ export interface Sink<SinkType> {
   build(): SinkType;
 }
 
-export type StreamDefinition<ReturnType extends object, SinkType extends ReturnType> = {
+export type StreamDefinition<
+  ReturnType extends object,
+  SinkType extends ReturnType,
+> = {
   args: Record<string, unknown>;
   returnType: ReturnType;
   sinkType: SinkType;
 };
 
-export type StreamDefinitions = Record<string, StreamDefinition<object, object>>;
+export type StreamDefinitions = Record<
+  string,
+  StreamDefinition<object, object>
+>;
 
 export type StreamEndpoints<Definitions extends StreamDefinitions> = {
-  [K in keyof Definitions]: (args: Definitions[K]["args"]) => Source<Definitions[K]["returnType"]>;
+  [K in keyof Definitions]: (
+    args: Definitions[K]["args"],
+  ) => Source<Definitions[K]["returnType"]>;
 };
 
 export type StreamSinks<Definitions extends StreamDefinitions> = {
-  [K in keyof Definitions]: ((snapshot: object) => Sink<Definitions[K]["sinkType"]>);
+  [K in keyof Definitions]: (
+    snapshot: object,
+  ) => Sink<Definitions[K]["sinkType"]>;
 };
