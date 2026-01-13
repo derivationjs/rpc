@@ -3,11 +3,17 @@ import { Server } from "http";
 import { WebSocketServer } from "ws";
 import { ClientHandler } from "./client-handler";
 import WeakList from "./weak-list";
-import { StreamEndpoints, StreamDefinitions } from "./stream-types";
+import { StreamEndpoints, MutationEndpoints, RPCDefinition } from "./stream-types";
 import { Graph } from "derivation";
 
-export function setupWebSocketServer<Defs extends StreamDefinitions>(graph: Graph, server: Server, endpoints: StreamEndpoints<Defs>, path = "/api/ws") {
-  const clients = new WeakList<ClientHandler<StreamDefinitions>>();
+export function setupWebSocketServer<Defs extends RPCDefinition>(
+  graph: Graph,
+  server: Server,
+  streamEndpoints: StreamEndpoints<Defs["streams"]>,
+  mutationEndpoints: MutationEndpoints<Defs["mutations"]>,
+  path = "/api/ws",
+) {
+  const clients = new WeakList<ClientHandler<Defs>>();
   graph.afterStep(() => {
     for (const client of clients) {
       client.handleStep();
@@ -20,7 +26,7 @@ export function setupWebSocketServer<Defs extends StreamDefinitions>(graph: Grap
   wss.on("connection", (ws, req) => {
     const { pathname } = parse(req.url || "/", true);
     if (pathname === path) {
-      const client = new ClientHandler<StreamDefinitions>(ws, endpoints);
+      const client = new ClientHandler<Defs>(ws, streamEndpoints, mutationEndpoints);
       clients.add(client);
       ws.on("message", (msg) => client.handleMessage(msg));
       ws.on("close", () => client.handleDisconnect());

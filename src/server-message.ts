@@ -18,10 +18,20 @@ export const DeltaMessageSchema = z.object({
 });
 export type DeltaMessage = z.infer<typeof DeltaMessageSchema>;
 
+export const ResultMessageSchema = z.object({
+  type: z.literal("result"),
+  id: z.number(),
+  success: z.boolean(),
+  value: z.unknown().optional(),
+  error: z.string().optional(),
+});
+export type ResultMessage = z.infer<typeof ResultMessageSchema>;
+
 export const ServerMessageSchema = z.discriminatedUnion("type", [
   HeartbeatMessageSchema,
   SubscribedSchema,
   DeltaMessageSchema,
+  ResultMessageSchema,
 ]);
 export type ServerMessage = z.infer<typeof ServerMessageSchema>;
 
@@ -37,5 +47,17 @@ export const ServerMessage = {
   delta: (changes: Record<string, unknown>): DeltaMessage => ({
     type: "delta",
     changes: changes,
+  }),
+  resultSuccess: (id: number, value: unknown): ResultMessage => ({
+    type: "result",
+    id,
+    success: true,
+    value,
+  }),
+  resultError: (id: number, error: string): ResultMessage => ({
+    type: "result",
+    id,
+    success: false,
+    error,
   }),
 };

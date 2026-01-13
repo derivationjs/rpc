@@ -1,18 +1,24 @@
 import { RawData, WebSocket } from "ws";
 import { parseClientMessage, ClientMessage } from "./client-message";
 import { ServerMessage } from "./server-message";
-import { Source, StreamEndpoints, StreamDefinitions } from "./stream-types";
+import { Source, StreamEndpoints, MutationEndpoints, RPCDefinition } from "./stream-types";
 
-export class ClientHandler<Defs extends StreamDefinitions> {
+export class ClientHandler<Defs extends RPCDefinition> {
   private readonly ws: WebSocket;
-  private readonly endpoints: StreamEndpoints<Defs>;
+  private readonly streamEndpoints: StreamEndpoints<Defs["streams"]>;
+  private readonly mutationEndpoints: MutationEndpoints<Defs["mutations"]>;
   private closed = false;
   private readonly streams = new Map<number, Source<unknown>>();
   private interval: NodeJS.Timeout | undefined;
 
-  constructor(ws: WebSocket, endpoints: StreamEndpoints<Defs>) {
+  constructor(
+    ws: WebSocket,
+    streamEndpoints: StreamEndpoints<Defs["streams"]>,
+    mutationEndpoints: MutationEndpoints<Defs["mutations"]>,
+  ) {
     this.ws = ws;
-    this.endpoints = endpoints;
+    this.streamEndpoints = streamEndpoints;
+    this.mutationEndpoints = mutationEndpoints;
 
     console.log("new client connected");
 
@@ -54,16 +60,16 @@ export class ClientHandler<Defs extends StreamDefinitions> {
       case "subscribe": {
         const { id, name, args } = message;
 
-        if (!(name in this.endpoints)) {
+        if (!(name in this.streamEndpoints)) {
           console.error(`Unknown stream: ${name}`);
           this.close();
           return;
         }
 
-        const endpoint = this.endpoints[name as keyof Defs];
+        const endpoint = this.streamEndpoints[name as keyof Defs["streams"]];
 
         try {
-          const source = endpoint(args as Defs[keyof Defs]["args"]);
+          const source = endpoint(args as Defs["streams"][keyof Defs["streams"]]["args"]);
           this.streams.set(id, source);
           this.sendMessage(ServerMessage.subscribed(id, source.Snapshot));
           console.log(`Client subscribed to \"${name}\" (${id})`);
@@ -78,6 +84,34 @@ export class ClientHandler<Defs extends StreamDefinitions> {
         const { id } = message;
         this.streams.delete(id);
         console.log(`Client unsubscribed from ${id}`);
+        break;
+      }
+
+      case "call": {
+        const { id, name, args } = message;
+
+        if (!(name in this.mutationEndpoints)) {
+          console.error(`Unknown mutation: ${name}`);
+          this.close();
+          return;
+        }
+
+        const endpoint = this.mutationEndpoints[name as keyof Defs["mutations"]];
+
+        endpoint(args as Defs["mutations"][keyof Defs["mutations"]]["args"])
+          .then((result) => {
+            if (result.success) {
+              this.sendMessage(ServerMessage.resultSuccess(id, result.value));
+              console.log(`Mutation \"${name}\" (${id}) completed successfully`);
+            } else {
+              this.sendMessage(ServerMessage.resultError(id, result.error));
+              console.log(`Mutation \"${name}\" (${id}) returned error: ${result.error}`);
+            }
+          })
+          .catch((err) => {
+            console.error(`Unhandled exception in mutation \"${name}\" (${id}):`, err);
+            this.close();
+          });
         break;
       }
 

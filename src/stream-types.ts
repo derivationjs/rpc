@@ -36,3 +36,30 @@ export type StreamSinks<Definitions extends StreamDefinitions> = {
     snapshot: object,
   ) => Sink<Definitions[K]["sinkType"], Definitions[K]["inputType"]>;
 };
+
+// Mutation types
+export type MutationResult<T> =
+  | { success: true; value: T }
+  | { success: false; error: string };
+
+export type MutationDefinition<Args, Result> = {
+  args: Args;
+  result: Result;
+};
+
+export type MutationDefinitions = Record<
+  string,
+  MutationDefinition<unknown, unknown>
+>;
+
+export type MutationEndpoints<Definitions extends MutationDefinitions> = {
+  [K in keyof Definitions]: (
+    args: Definitions[K]["args"],
+  ) => Promise<MutationResult<Definitions[K]["result"]>>;
+};
+
+// Combined RPC definition
+export type RPCDefinition = {
+  streams: StreamDefinitions;
+  mutations: MutationDefinitions;
+};

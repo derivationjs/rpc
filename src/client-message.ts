@@ -19,10 +19,19 @@ export const HeartbeatMessageSchema = z.object({
 });
 export type HeartbeatMessage = z.infer<typeof HeartbeatMessageSchema>;
 
+export const CallMessageSchema = z.object({
+  type: z.literal("call"),
+  id: z.number(),
+  name: z.string(),
+  args: z.looseObject({}),
+});
+export type CallMessage = z.infer<typeof CallMessageSchema>;
+
 export const ClientMessageSchema = z.discriminatedUnion("type", [
   SubscribeMessageSchema,
   UnsubscribeMessageSchema,
   HeartbeatMessageSchema,
+  CallMessageSchema,
 ]);
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
 
@@ -44,6 +53,16 @@ export const ClientMessage = {
   unsubscribe: (id: number): UnsubscribeMessage => ({
     type: "unsubscribe",
     id,
+  }),
+  call: (
+    id: number,
+    name: string,
+    args: Record<string, unknown>,
+  ): CallMessage => ({
+    type: "call",
+    id,
+    name,
+    args,
   }),
   heartbeat: (): HeartbeatMessage => ({
     type: "heartbeat",
