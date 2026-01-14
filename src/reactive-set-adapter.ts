@@ -1,11 +1,20 @@
-import { ZSet, Graph, ReactiveSet, ReactiveSetSource, ZSetChangeInput } from "derivation";
+import {
+  ZSet,
+  Graph,
+  ReactiveSet,
+  ReactiveSetSource,
+  ZSetChangeInput,
+} from "derivation";
 import { Source, Sink } from "./stream-types";
 import { Iso, zset, zsetToArray, compose } from "./iso";
 
 export class ReactiveSetSourceAdapter<T> implements Source<ReactiveSet<T>> {
-  private readonly iso: Iso<ZSet<T>, Array<[unknown, number]>>;
+  private readonly iso: Iso<ZSet<T>, [unknown, number][]>;
 
-  constructor(private readonly set: ReactiveSet<T>, iso: Iso<T, unknown>) {
+  constructor(
+    private readonly set: ReactiveSet<T>,
+    iso: Iso<T, unknown>,
+  ) {
     this.iso = compose(zset(iso), zsetToArray());
   }
 
@@ -13,8 +22,10 @@ export class ReactiveSetSourceAdapter<T> implements Source<ReactiveSet<T>> {
     return this.iso.to(this.set.snapshot);
   }
 
-  get LastChange(): object {
-    return this.iso.to(this.set.changes.value)
+  get LastChange(): object | null {
+    const change = this.iso.to(this.set.changes.value);
+    if (change.length === 0) return null;
+    return change;
   }
 
   get Stream(): ReactiveSet<T> {
@@ -22,10 +33,16 @@ export class ReactiveSetSourceAdapter<T> implements Source<ReactiveSet<T>> {
   }
 }
 
-export class ReactiveSetSinkAdapter<T> implements Sink<ReactiveSetSource<T>, ZSetChangeInput<T>> {
+export class ReactiveSetSinkAdapter<T>
+  implements Sink<ReactiveSetSource<T>, ZSetChangeInput<T>>
+{
   private readonly initialSet: ZSet<T>;
 
-  constructor(private readonly graph: Graph, private readonly iso: Iso<ZSet<T>, unknown>, snapshot: object) {
+  constructor(
+    private readonly graph: Graph,
+    private readonly iso: Iso<ZSet<T>, unknown>,
+    snapshot: object,
+  ) {
     this.initialSet = iso.from(snapshot as Array<[T, number]>);
   }
 
@@ -39,7 +56,10 @@ export class ReactiveSetSinkAdapter<T> implements Sink<ReactiveSetSource<T>, ZSe
   }
 }
 
-export function sink<T>(graph: Graph, iso: Iso<T, unknown>): (snapshot: object) => Sink<ReactiveSetSource<T>, ZSetChangeInput<T>> {
+export function sink<T>(
+  graph: Graph,
+  iso: Iso<T, unknown>,
+): (snapshot: object) => Sink<ReactiveSetSource<T>, ZSetChangeInput<T>> {
   const wholeIso = compose(zset(iso), zsetToArray());
   return (snapshot: object) => {
     return new ReactiveSetSinkAdapter<T>(graph, wholeIso, snapshot);

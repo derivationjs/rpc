@@ -1,6 +1,6 @@
 export interface Source<ReturnType> {
   get Snapshot(): object;
-  get LastChange(): object;
+  get LastChange(): object | null;
   get Stream(): ReturnType;
 }
 

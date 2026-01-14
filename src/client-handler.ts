@@ -164,7 +164,9 @@ export class ClientHandler<Defs extends RPCDefinition> {
     const changes: Record<number, unknown> = {};
 
     for (const [id, source] of this.streams) {
-      changes[id] = source.LastChange;
+      const change = source.LastChange;
+      if (change === null) continue;
+      changes[id] = change;
     }
 
     if (Object.keys(changes).length > 0) {

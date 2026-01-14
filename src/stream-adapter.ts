@@ -13,7 +13,7 @@ export class StreamSourceAdapter<T extends object> implements Source<ReactiveVal
     return this.iso.to(this.stream.value);
   }
 
-  get LastChange(): object {
+  get LastChange(): object | null {
     return this.iso.to(this.stream.value);
   }
 

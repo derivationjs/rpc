@@ -1,11 +1,23 @@
-import { ZMap, Graph, ReactiveMap, ReactiveMapSource, ZMapChangeInput } from "derivation";
+import {
+  ZMap,
+  Graph,
+  ReactiveMap,
+  ReactiveMapSource,
+  ZMapChangeInput,
+} from "derivation";
 import { Source, Sink } from "./stream-types";
 import { Iso, zmap } from "./iso";
 
-export class ReactiveMapSourceAdapter<K, V> implements Source<ReactiveMap<K, V>> {
-  private readonly iso: Iso<ZMap<K, V>, object>;
+export class ReactiveMapSourceAdapter<K, V>
+  implements Source<ReactiveMap<K, V>>
+{
+  private readonly iso: Iso<ZMap<K, V>, [unknown, unknown, unknown][]>;
 
-  constructor(private readonly map: ReactiveMap<K, V>, keyIso: Iso<K, unknown>, valueIso: Iso<V, unknown>) {
+  constructor(
+    private readonly map: ReactiveMap<K, V>,
+    keyIso: Iso<K, unknown>,
+    valueIso: Iso<V, unknown>,
+  ) {
     this.iso = zmap(keyIso, valueIso);
   }
 
@@ -13,8 +25,10 @@ export class ReactiveMapSourceAdapter<K, V> implements Source<ReactiveMap<K, V>>
     return this.iso.to(this.map.snapshot);
   }
 
-  get LastChange(): object {
-    return this.iso.to(this.map.changes.value);
+  get LastChange(): object | null {
+    const change = this.iso.to(this.map.changes.value);
+    if (change.length === 0) return null;
+    return change;
   }
 
   get Stream(): ReactiveMap<K, V> {
@@ -22,11 +36,18 @@ export class ReactiveMapSourceAdapter<K, V> implements Source<ReactiveMap<K, V>>
   }
 }
 
-export class ReactiveMapSinkAdapter<K, V> implements Sink<ReactiveMapSource<K, V>, ZMapChangeInput<K, V>> {
+export class ReactiveMapSinkAdapter<K, V>
+  implements Sink<ReactiveMapSource<K, V>, ZMapChangeInput<K, V>>
+{
   private readonly iso: Iso<ZMap<K, V>, object>;
   private readonly initialMap: ZMap<K, V>;
 
-  constructor(private readonly graph: Graph, keyIso: Iso<K, unknown>, valueIso: Iso<V, unknown>, snapshot: object) {
+  constructor(
+    private readonly graph: Graph,
+    keyIso: Iso<K, unknown>,
+    valueIso: Iso<V, unknown>,
+    snapshot: object,
+  ) {
     this.iso = zmap(keyIso, valueIso);
     this.initialMap = this.iso.from(snapshot as Array<[K, V, number]>);
   }
