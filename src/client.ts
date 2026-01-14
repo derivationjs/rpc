@@ -29,6 +29,7 @@ export class Client<Defs extends RPCDefinition> {
   >();
   private activeStreams = new Map<number, (change: object) => void>();
   private heartbeatTimeout: NodeJS.Timeout | undefined;
+  private inactivityTimeout: NodeJS.Timeout | undefined;
 
   private registry = new FinalizationRegistry<[number, string]>(
     ([id, name]) => {
@@ -48,6 +49,16 @@ export class Client<Defs extends RPCDefinition> {
     }, 10_000);
   }
 
+  private resetInactivity() {
+    if (this.inactivityTimeout) {
+      clearTimeout(this.inactivityTimeout);
+    }
+
+    this.inactivityTimeout = setTimeout(() => {
+      this.close();
+    }, 30_000);
+  }
+
   constructor(
     private ws: WebSocket,
     private sinks: StreamSinks<Defs["streams"]>,
@@ -58,9 +69,12 @@ export class Client<Defs extends RPCDefinition> {
       this.ws.send(JSON.stringify(message));
     };
     this.resetHeartbeat();
+    this.resetInactivity();
   }
 
   private handleMessage(message: ServerMessage) {
+    this.resetInactivity();
+
     switch (message.type) {
       case "snapshot": {
         const resolve = this.pendingStreams.get(message.id);
@@ -159,5 +173,13 @@ export class Client<Defs extends RPCDefinition> {
     });
 
     return result;
+  }
+
+  close() {
+    clearTimeout(this.heartbeatTimeout);
+    clearTimeout(this.inactivityTimeout);
+    try {
+      this.ws.close();
+    } catch {}
   }
 }

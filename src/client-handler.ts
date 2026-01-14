@@ -15,6 +15,7 @@ export class ClientHandler<Defs extends RPCDefinition> {
   private closed = false;
   private readonly streams = new Map<number, Source<unknown>>();
   private heartbeatTimeout: NodeJS.Timeout | undefined;
+  private inactivityTimeout: NodeJS.Timeout | undefined;
 
   constructor(
     ws: WebSocket,
@@ -28,6 +29,7 @@ export class ClientHandler<Defs extends RPCDefinition> {
     console.log("new client connected");
 
     this.resetHeartbeat();
+    this.resetInactivity();
   }
 
   private resetHeartbeat() {
@@ -40,7 +42,19 @@ export class ClientHandler<Defs extends RPCDefinition> {
     }, 10_000);
   }
 
+  private resetInactivity() {
+    if (this.inactivityTimeout) {
+      clearTimeout(this.inactivityTimeout);
+    }
+
+    this.inactivityTimeout = setTimeout(() => {
+      this.close();
+    }, 30_000);
+  }
+
   handleMessage(message: RawData) {
+    this.resetInactivity();
+
     let data: object;
     try {
       data = JSON.parse(message.toString());
@@ -170,6 +184,7 @@ export class ClientHandler<Defs extends RPCDefinition> {
     if (this.closed) return;
     this.closed = true;
     clearTimeout(this.heartbeatTimeout);
+    clearTimeout(this.inactivityTimeout);
     try {
       this.ws.close();
     } catch {}
