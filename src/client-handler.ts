@@ -176,6 +176,12 @@ export class ClientHandler<Defs extends RPCDefinition> {
     this.resetHeartbeat();
 
     if (!this.closed) {
+      if (this.ws.bufferedAmount > 100 * 1024) {
+        console.log("Send buffer exceeded 100KB, closing connection");
+        this.close();
+        return;
+      }
+
       try {
         this.ws.send(JSON.stringify(message));
       } catch (err) {
