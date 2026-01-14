@@ -7,6 +7,7 @@ import {
   MutationEndpoints,
   RPCDefinition,
 } from "./stream-types";
+import { RateLimiter } from "./rate-limiter";
 
 export class ClientHandler<Defs extends RPCDefinition> {
   private readonly ws: WebSocket;
@@ -16,6 +17,7 @@ export class ClientHandler<Defs extends RPCDefinition> {
   private readonly streams = new Map<number, Source<unknown>>();
   private heartbeatTimeout: NodeJS.Timeout | undefined;
   private inactivityTimeout: NodeJS.Timeout | undefined;
+  private readonly rateLimiter: RateLimiter;
 
   constructor(
     ws: WebSocket,
@@ -25,6 +27,7 @@ export class ClientHandler<Defs extends RPCDefinition> {
     this.ws = ws;
     this.streamEndpoints = streamEndpoints;
     this.mutationEndpoints = mutationEndpoints;
+    this.rateLimiter = new RateLimiter(100, 300); // 100 messages over 5 minutes
 
     console.log("new client connected");
 
@@ -54,6 +57,13 @@ export class ClientHandler<Defs extends RPCDefinition> {
 
   handleMessage(message: RawData) {
     this.resetInactivity();
+
+    // Check rate limit
+    if (this.rateLimiter.trigger()) {
+      console.log("Rate limit exceeded, closing connection");
+      this.close();
+      return;
+    }
 
     let data: object;
     try {
