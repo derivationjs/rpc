@@ -182,4 +182,8 @@ export class Client<Defs extends RPCDefinition> {
       this.ws.close();
     } catch {}
   }
+
+  setPresence(value: Record<string, unknown>): void {
+    this.sendMessage(ClientMessage.presence(value));
+  }
 }

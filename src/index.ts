@@ -4,3 +4,4 @@ export { ReactiveSetSourceAdapter, ReactiveSetSinkAdapter, sink as setSink } fro
 export { ReactiveMapSourceAdapter, ReactiveMapSinkAdapter, sink as mapSink } from "./reactive-map-adapter";
 export { StreamSourceAdapter, StreamSinkAdapter, sink as streamSink } from "./stream-adapter";
 export { setupWebSocketServer } from "./websocket-server";
+export type { PresenceHandler } from "./presence-manager";

@@ -27,11 +27,18 @@ export const CallMessageSchema = z.object({
 });
 export type CallMessage = z.infer<typeof CallMessageSchema>;
 
+export const PresenceMessageSchema = z.object({
+  type: z.literal("presence"),
+  data: z.looseObject({}),
+});
+export type PresenceMessage = z.infer<typeof PresenceMessageSchema>;
+
 export const ClientMessageSchema = z.discriminatedUnion("type", [
   SubscribeMessageSchema,
   UnsubscribeMessageSchema,
   HeartbeatMessageSchema,
   CallMessageSchema,
+  PresenceMessageSchema,
 ]);
 export type ClientMessage = z.infer<typeof ClientMessageSchema>;
 
@@ -66,5 +73,9 @@ export const ClientMessage = {
   }),
   heartbeat: (): HeartbeatMessage => ({
     type: "heartbeat",
+  }),
+  presence: (data: Record<string, unknown>): PresenceMessage => ({
+    type: "presence",
+    data,
   }),
 };

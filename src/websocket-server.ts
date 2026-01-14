@@ -5,12 +5,14 @@ import { ClientHandler } from "./client-handler";
 import WeakList from "./weak-list";
 import { StreamEndpoints, MutationEndpoints, RPCDefinition } from "./stream-types";
 import { Graph } from "derivation";
+import { PresenceHandler } from "./presence-manager";
 
 export function setupWebSocketServer<Defs extends RPCDefinition>(
   graph: Graph,
   server: Server,
   streamEndpoints: StreamEndpoints<Defs["streams"]>,
   mutationEndpoints: MutationEndpoints<Defs["mutations"]>,
+  presenceHandler?: PresenceHandler,
   path = "/api/ws",
 ) {
   const clients = new WeakList<ClientHandler<Defs>>();
@@ -26,7 +28,7 @@ export function setupWebSocketServer<Defs extends RPCDefinition>(
   wss.on("connection", (ws, req) => {
     const { pathname } = parse(req.url || "/", true);
     if (pathname === path) {
-      const client = new ClientHandler<Defs>(ws, streamEndpoints, mutationEndpoints);
+      const client = new ClientHandler<Defs>(ws, streamEndpoints, mutationEndpoints, presenceHandler);
       clients.add(client);
       ws.on("message", (msg) => client.handleMessage(msg));
       ws.on("close", () => client.handleDisconnect());

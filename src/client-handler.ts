@@ -8,11 +8,14 @@ import {
   RPCDefinition,
 } from "./stream-types";
 import { RateLimiter } from "./rate-limiter";
+import { PresenceHandler } from "./presence-manager";
 
 export class ClientHandler<Defs extends RPCDefinition> {
   private readonly ws: WebSocket;
   private readonly streamEndpoints: StreamEndpoints<Defs["streams"]>;
   private readonly mutationEndpoints: MutationEndpoints<Defs["mutations"]>;
+  private readonly presenceHandler?: PresenceHandler;
+  private currentPresence?: Record<string, unknown>;
   private closed = false;
   private readonly streams = new Map<number, Source<unknown>>();
   private heartbeatTimeout: NodeJS.Timeout | undefined;
@@ -23,10 +26,12 @@ export class ClientHandler<Defs extends RPCDefinition> {
     ws: WebSocket,
     streamEndpoints: StreamEndpoints<Defs["streams"]>,
     mutationEndpoints: MutationEndpoints<Defs["mutations"]>,
+    presenceHandler?: PresenceHandler,
   ) {
     this.ws = ws;
     this.streamEndpoints = streamEndpoints;
     this.mutationEndpoints = mutationEndpoints;
+    this.presenceHandler = presenceHandler;
     this.rateLimiter = new RateLimiter(100, 300); // 100 messages over 5 minutes
 
     console.log("new client connected");
@@ -156,6 +161,25 @@ export class ClientHandler<Defs extends RPCDefinition> {
 
       case "heartbeat":
         break;
+
+      case "presence": {
+        if (!this.presenceHandler) {
+          console.error("Presence not configured");
+          this.close();
+          return;
+        }
+
+        const { data } = message;
+
+        if (this.currentPresence !== undefined) {
+          this.presenceHandler.update(this.currentPresence, data);
+        } else {
+          this.presenceHandler.add(data);
+        }
+
+        this.currentPresence = data;
+        break;
+      }
     }
   }
 
@@ -203,6 +227,11 @@ export class ClientHandler<Defs extends RPCDefinition> {
     this.closed = true;
     clearTimeout(this.heartbeatTimeout);
     clearTimeout(this.inactivityTimeout);
+
+    if (this.presenceHandler && this.currentPresence !== undefined) {
+      this.presenceHandler.remove(this.currentPresence);
+    }
+
     try {
       this.ws.close();
     } catch {}
