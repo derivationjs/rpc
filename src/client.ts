@@ -1,7 +1,12 @@
 import { ClientMessage } from "./client-message";
 import { ServerMessage } from "./server-message";
 import type { Graph } from "derivation";
-import type { Sink, StreamSinks, RPCDefinition, MutationResult } from "./stream-types";
+import type {
+  Sink,
+  StreamSinks,
+  RPCDefinition,
+  MutationResult,
+} from "./stream-types";
 
 function changer<T extends object, I extends object>(
   sink: Sink<T, I>,
@@ -18,15 +23,30 @@ function changer<T extends object, I extends object>(
 export class Client<Defs extends RPCDefinition> {
   private nextId = 1;
   private pendingStreams = new Map<number, (snapshot: object) => void>();
-  private pendingMutations = new Map<number, (result: MutationResult<unknown>) => void>();
+  private pendingMutations = new Map<
+    number,
+    (result: MutationResult<unknown>) => void
+  >();
   private activeStreams = new Map<number, (change: object) => void>();
+  private heartbeatTimeout: NodeJS.Timeout | undefined;
+
   private registry = new FinalizationRegistry<[number, string]>(
     ([id, name]) => {
       console.log(`🧹 Stream ${id} (${name}) collected — unsubscribing`);
-      this.send(ClientMessage.unsubscribe(id));
+      this.sendMessage(ClientMessage.unsubscribe(id));
       this.activeStreams.delete(id);
     },
   );
+
+  private resetHeartbeat() {
+    if (this.heartbeatTimeout) {
+      clearTimeout(this.heartbeatTimeout);
+    }
+
+    this.heartbeatTimeout = setTimeout(() => {
+      this.sendMessage(ClientMessage.heartbeat());
+    }, 10_000);
+  }
 
   constructor(
     private ws: WebSocket,
@@ -35,8 +55,9 @@ export class Client<Defs extends RPCDefinition> {
   ) {
     this.ws.onmessage = (event) => {
       const message = JSON.parse(event.data) as ServerMessage;
-      this.handleMessage(message);
+      this.ws.send(JSON.stringify(message));
     };
+    this.resetHeartbeat();
   }
 
   private handleMessage(message: ServerMessage) {
@@ -58,7 +79,7 @@ export class Client<Defs extends RPCDefinition> {
             sink(change);
           } else if (!sink) {
             console.log(`🧹 Sink ${id} GC'd — auto-unsubscribing`);
-            this.send(ClientMessage.unsubscribe(id));
+            this.sendMessage(ClientMessage.unsubscribe(id));
             this.activeStreams.delete(id);
           }
         }
@@ -71,7 +92,10 @@ export class Client<Defs extends RPCDefinition> {
           if (message.success) {
             resolve({ success: true, value: message.value });
           } else {
-            resolve({ success: false, error: message.error || "Unknown error" });
+            resolve({
+              success: false,
+              error: message.error || "Unknown error",
+            });
           }
           this.pendingMutations.delete(message.id);
         }
@@ -82,7 +106,8 @@ export class Client<Defs extends RPCDefinition> {
     }
   }
 
-  private send(message: ClientMessage) {
+  private sendMessage(message: ClientMessage) {
+    this.resetHeartbeat();
     this.ws.send(JSON.stringify(message));
   }
 
@@ -95,7 +120,7 @@ export class Client<Defs extends RPCDefinition> {
     );
     const id = this.nextId++;
 
-    this.send(ClientMessage.subscribe(id, String(key), args));
+    this.sendMessage(ClientMessage.subscribe(id, String(key), args));
 
     const snapshot = await new Promise<object>((resolve) => {
       this.pendingStreams.set(id, resolve);
@@ -120,10 +145,17 @@ export class Client<Defs extends RPCDefinition> {
     );
     const id = this.nextId++;
 
-    this.send(ClientMessage.call(id, String(key), args as Record<string, unknown>));
+    this.sendMessage(
+      ClientMessage.call(id, String(key), args as Record<string, unknown>),
+    );
 
-    const result = await new Promise<MutationResult<Defs["mutations"][Key]["result"]>>((resolve) => {
-      this.pendingMutations.set(id, resolve as (result: MutationResult<unknown>) => void);
+    const result = await new Promise<
+      MutationResult<Defs["mutations"][Key]["result"]>
+    >((resolve) => {
+      this.pendingMutations.set(
+        id,
+        resolve as (result: MutationResult<unknown>) => void,
+      );
     });
 
     return result;

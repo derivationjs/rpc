@@ -1,7 +1,12 @@
 import { RawData, WebSocket } from "ws";
 import { parseClientMessage, ClientMessage } from "./client-message";
 import { ServerMessage } from "./server-message";
-import { Source, StreamEndpoints, MutationEndpoints, RPCDefinition } from "./stream-types";
+import {
+  Source,
+  StreamEndpoints,
+  MutationEndpoints,
+  RPCDefinition,
+} from "./stream-types";
 
 export class ClientHandler<Defs extends RPCDefinition> {
   private readonly ws: WebSocket;
@@ -9,7 +14,7 @@ export class ClientHandler<Defs extends RPCDefinition> {
   private readonly mutationEndpoints: MutationEndpoints<Defs["mutations"]>;
   private closed = false;
   private readonly streams = new Map<number, Source<unknown>>();
-  private interval: NodeJS.Timeout | undefined;
+  private heartbeatTimeout: NodeJS.Timeout | undefined;
 
   constructor(
     ws: WebSocket,
@@ -26,11 +31,11 @@ export class ClientHandler<Defs extends RPCDefinition> {
   }
 
   private resetHeartbeat() {
-    if (this.interval) {
-      clearInterval(this.interval);
+    if (this.heartbeatTimeout) {
+      clearTimeout(this.heartbeatTimeout);
     }
 
-    this.interval = setInterval(() => {
+    this.heartbeatTimeout = setTimeout(() => {
       this.sendMessage(ServerMessage.heartbeat());
     }, 10_000);
   }
@@ -69,7 +74,9 @@ export class ClientHandler<Defs extends RPCDefinition> {
         const endpoint = this.streamEndpoints[name as keyof Defs["streams"]];
 
         try {
-          const source = endpoint(args as Defs["streams"][keyof Defs["streams"]]["args"]);
+          const source = endpoint(
+            args as Defs["streams"][keyof Defs["streams"]]["args"],
+          );
           this.streams.set(id, source);
           this.sendMessage(ServerMessage.subscribed(id, source.Snapshot));
           console.log(`Client subscribed to \"${name}\" (${id})`);
@@ -96,20 +103,28 @@ export class ClientHandler<Defs extends RPCDefinition> {
           return;
         }
 
-        const endpoint = this.mutationEndpoints[name as keyof Defs["mutations"]];
+        const endpoint =
+          this.mutationEndpoints[name as keyof Defs["mutations"]];
 
         endpoint(args as Defs["mutations"][keyof Defs["mutations"]]["args"])
           .then((result) => {
             if (result.success) {
               this.sendMessage(ServerMessage.resultSuccess(id, result.value));
-              console.log(`Mutation \"${name}\" (${id}) completed successfully`);
+              console.log(
+                `Mutation \"${name}\" (${id}) completed successfully`,
+              );
             } else {
               this.sendMessage(ServerMessage.resultError(id, result.error));
-              console.log(`Mutation \"${name}\" (${id}) returned error: ${result.error}`);
+              console.log(
+                `Mutation \"${name}\" (${id}) returned error: ${result.error}`,
+              );
             }
           })
           .catch((err) => {
-            console.error(`Unhandled exception in mutation \"${name}\" (${id}):`, err);
+            console.error(
+              `Unhandled exception in mutation \"${name}\" (${id}):`,
+              err,
+            );
             this.close();
           });
         break;
@@ -154,7 +169,7 @@ export class ClientHandler<Defs extends RPCDefinition> {
   close() {
     if (this.closed) return;
     this.closed = true;
-    clearInterval(this.interval);
+    clearTimeout(this.heartbeatTimeout);
     try {
       this.ws.close();
     } catch {}
