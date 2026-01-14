@@ -20,7 +20,7 @@ export function setupWebSocketServer<Defs extends RPCDefinition>(
     }
   });
 
-  const wss = new WebSocketServer({ noServer: true });
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 100 * 1024 });
 
   // Handle WebSocket connections for reactive streams
   wss.on("connection", (ws, req) => {
