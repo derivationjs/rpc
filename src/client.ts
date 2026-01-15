@@ -66,7 +66,7 @@ export class Client<Defs extends RPCDefinition> {
   ) {
     this.ws.onmessage = (event) => {
       const message = JSON.parse(event.data) as ServerMessage;
-      this.ws.send(JSON.stringify(message));
+      this.handleMessage(message);
     };
     this.resetHeartbeat();
     this.resetInactivity();
