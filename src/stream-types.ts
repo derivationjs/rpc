@@ -10,11 +10,12 @@ export interface Sink<SinkType, InputType> {
 }
 
 export type StreamDefinition<
+  Args extends object,
   ReturnType extends object,
   SinkType extends ReturnType,
   InputType extends object,
 > = {
-  args: Record<string, unknown>;
+  args: Args;
   returnType: ReturnType;
   sinkType: SinkType;
   inputType: InputType;
@@ -22,7 +23,7 @@ export type StreamDefinition<
 
 export type StreamDefinitions = Record<
   string,
-  StreamDefinition<object, object, object>
+  StreamDefinition<object, object, object, object>
 >;
 
 export type StreamEndpoints<Definitions extends StreamDefinitions> = {

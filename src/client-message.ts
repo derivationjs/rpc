@@ -50,12 +50,12 @@ export const ClientMessage = {
   subscribe: (
     id: number,
     name: string,
-    args: Record<string, unknown>,
+    args: object,
   ): SubscribeMessage => ({
     type: "subscribe",
     id,
     name,
-    args,
+    args: args as Record<string, unknown>,
   }),
   unsubscribe: (id: number): UnsubscribeMessage => ({
     type: "unsubscribe",
@@ -64,18 +64,18 @@ export const ClientMessage = {
   call: (
     id: number,
     name: string,
-    args: Record<string, unknown>,
+    args: object,
   ): CallMessage => ({
     type: "call",
     id,
     name,
-    args,
+    args: args as Record<string, unknown>,
   }),
   heartbeat: (): HeartbeatMessage => ({
     type: "heartbeat",
   }),
-  presence: (data: Record<string, unknown>): PresenceMessage => ({
+  presence: (data: object): PresenceMessage => ({
     type: "presence",
-    data,
+    data: data as Record<string, unknown>,
   }),
 };
