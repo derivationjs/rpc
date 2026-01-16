@@ -26,9 +26,10 @@ export type StreamDefinitions = Record<
   StreamDefinition<object, object, object, object>
 >;
 
-export type StreamEndpoints<Definitions extends StreamDefinitions> = {
+export type StreamEndpoints<Definitions extends StreamDefinitions, Ctx = void> = {
   [K in keyof Definitions]: (
     args: Definitions[K]["args"],
+    ctx: Ctx,
   ) => Source<Definitions[K]["returnType"]>;
 };
 
@@ -53,9 +54,10 @@ export type MutationDefinitions = Record<
   MutationDefinition<unknown, unknown>
 >;
 
-export type MutationEndpoints<Definitions extends MutationDefinitions> = {
+export type MutationEndpoints<Definitions extends MutationDefinitions, Ctx = void> = {
   [K in keyof Definitions]: (
     args: Definitions[K]["args"],
+    ctx: Ctx,
   ) => Promise<MutationResult<Definitions[K]["result"]>>;
 };
 

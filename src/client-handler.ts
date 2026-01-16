@@ -10,10 +10,11 @@ import {
 import { RateLimiter } from "./rate-limiter";
 import { PresenceHandler } from "./presence-manager";
 
-export class ClientHandler<Defs extends RPCDefinition> {
+export class ClientHandler<Defs extends RPCDefinition, Ctx = void> {
   private readonly ws: WebSocket;
-  private readonly streamEndpoints: StreamEndpoints<Defs["streams"]>;
-  private readonly mutationEndpoints: MutationEndpoints<Defs["mutations"]>;
+  private readonly context: Ctx;
+  private readonly streamEndpoints: StreamEndpoints<Defs["streams"], Ctx>;
+  private readonly mutationEndpoints: MutationEndpoints<Defs["mutations"], Ctx>;
   private readonly presenceHandler?: PresenceHandler;
   private currentPresence?: Record<string, unknown>;
   private closed = false;
@@ -24,11 +25,13 @@ export class ClientHandler<Defs extends RPCDefinition> {
 
   constructor(
     ws: WebSocket,
-    streamEndpoints: StreamEndpoints<Defs["streams"]>,
-    mutationEndpoints: MutationEndpoints<Defs["mutations"]>,
+    context: Ctx,
+    streamEndpoints: StreamEndpoints<Defs["streams"], Ctx>,
+    mutationEndpoints: MutationEndpoints<Defs["mutations"], Ctx>,
     presenceHandler?: PresenceHandler,
   ) {
     this.ws = ws;
+    this.context = context;
     this.streamEndpoints = streamEndpoints;
     this.mutationEndpoints = mutationEndpoints;
     this.presenceHandler = presenceHandler;
@@ -105,6 +108,7 @@ export class ClientHandler<Defs extends RPCDefinition> {
         try {
           const source = endpoint(
             args as Defs["streams"][keyof Defs["streams"]]["args"],
+            this.context,
           );
           this.streams.set(id, source);
           this.sendMessage(ServerMessage.subscribed(id, source.Snapshot));
@@ -135,7 +139,10 @@ export class ClientHandler<Defs extends RPCDefinition> {
         const endpoint =
           this.mutationEndpoints[name as keyof Defs["mutations"]];
 
-        endpoint(args as Defs["mutations"][keyof Defs["mutations"]]["args"])
+        endpoint(
+          args as Defs["mutations"][keyof Defs["mutations"]]["args"],
+          this.context,
+        )
           .then((result) => {
             if (result.success) {
               this.sendMessage(ServerMessage.resultSuccess(id, result.value));
