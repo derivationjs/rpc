@@ -13,22 +13,21 @@ export class RateLimiter {
   trigger(): boolean {
     const now = process.hrtime.bigint();
 
-    // Add current timestamp
-    this.timestamps.push(now);
-
-    // Remove expired timestamps from front (O(1) amortized with Queue)
     const cutoff = now - this.windowNanos;
     while (!this.timestamps.isEmpty()) {
       const oldest = this.timestamps.peek();
       if (oldest === undefined || oldest >= cutoff) {
-        // Not expired, stop
         break;
       }
-      // Otherwise, oldest was expired, remove it
       this.timestamps.pop();
     }
 
-    // Return true if we've exceeded the limit
-    return this.timestamps.length > this.maxOccurrences;
+    if (this.timestamps.length >= this.maxOccurrences) {
+      return true;
+    }
+
+    this.timestamps.push(now);
+
+    return false;
   }
 }
