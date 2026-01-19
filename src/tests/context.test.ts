@@ -43,7 +43,7 @@ describe('Context', () => {
 
       // Create test endpoints that capture context
       const streamEndpoints: StreamEndpoints<TestRPCDefinition['streams'], TestContext> = {
-        testStream: (args, ctx) => {
+        testStream: async (args, ctx) => {
           receivedContexts.push(ctx);
           const input = graph.inputValue({ value: `Hello from ${ctx.userId}` });
           return new StreamSourceAdapter(input, id());
@@ -249,7 +249,7 @@ describe('Context', () => {
     let capturedContext: TestContext | null = null;
 
     const streamEndpoints: StreamEndpoints<TestRPCDefinition['streams'], TestContext> = {
-      testStream: (args, ctx) => {
+      testStream: async (args, ctx) => {
         capturedContext = ctx;
         const input = newGraph.inputValue({ value: 'test' });
         return new StreamSourceAdapter(input, id());

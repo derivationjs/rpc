@@ -28,7 +28,7 @@ export type SharedWorkerServerOptions<
  * // worker.ts
  * const { graph } = setupSharedWorker({
  *   streams: {
- *     todos: (args, ctx) => new ReactiveSetSourceAdapter(source),
+ *     todos: async (args, ctx) => new ReactiveSetSourceAdapter(source),
  *   },
  *   mutations: {
  *     addTodo: async (args, ctx) => ({ success: true, value: newTodo }),

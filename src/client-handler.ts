@@ -96,7 +96,7 @@ export class ClientHandler<Defs extends RPCDefinition, Ctx = void> {
     this.handleClientMessage(parsed);
   }
 
-  handleClientMessage(message: ClientMessage) {
+  async handleClientMessage(message: ClientMessage) {
     switch (message.type) {
       case "subscribe": {
         const { id, name, args } = message;
@@ -110,7 +110,7 @@ export class ClientHandler<Defs extends RPCDefinition, Ctx = void> {
         const endpoint = this.streamEndpoints[name as keyof Defs["streams"]];
 
         try {
-          const source = endpoint(
+          const source = await endpoint(
             args as Defs["streams"][keyof Defs["streams"]]["args"],
             this.context,
           );

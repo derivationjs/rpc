@@ -30,7 +30,7 @@ export type StreamEndpoints<Definitions extends StreamDefinitions, Ctx = void> =
   [K in keyof Definitions]: (
     args: Definitions[K]["args"],
     ctx: Ctx,
-  ) => Source<Definitions[K]["returnType"]>;
+  ) => Promise<Source<Definitions[K]["returnType"]>>;
 };
 
 export type StreamSinks<Definitions extends StreamDefinitions> = {
