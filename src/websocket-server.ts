@@ -1,11 +1,12 @@
 import { parse } from "url";
 import { Server, IncomingMessage } from "http";
-import { WebSocketServer, WebSocket } from "ws";
+import { WebSocketServer, WebSocket, RawData } from "ws";
 import { ClientHandler } from "./client-handler";
 import WeakList from "./weak-list";
 import { StreamEndpoints, MutationEndpoints, RPCDefinition } from "./stream-types";
 import { Graph } from "derivation";
 import { PresenceHandler } from "./presence-manager";
+import { NodeWebSocketTransport } from "./websocket-transport";
 
 export type WebSocketServerOptions<Ctx> = {
   createContext: (ws: WebSocket, req: IncomingMessage) => Ctx | Promise<Ctx>;
@@ -35,24 +36,25 @@ export function setupWebSocketServer<Defs extends RPCDefinition, Ctx = void>(
   wss.on("connection", (ws, req) => {
     const { pathname } = parse(req.url || "/", true);
     if (pathname === path) {
+      const messageBuffer: RawData[] = [];
       let client: ClientHandler<Defs, Ctx> | null = null;
-      const messageBuffer: any[] = [];
 
-      // Set up message handler immediately to buffer messages
-      ws.on("message", (msg) => {
-        if (client) {
-          client.handleMessage(msg);
-        } else {
-          // Buffer messages until context is created
-          messageBuffer.push(msg);
-        }
-      });
+      // Set up temporary message handler to buffer messages
+      const tempMessageHandler = (msg: RawData) => {
+        messageBuffer.push(msg);
+      };
+      ws.on("message", tempMessageHandler);
 
       // Create context (handle both sync and async)
       Promise.resolve(createContext(ws, req))
         .then((context) => {
+          // Remove temporary handler
+          ws.removeListener("message", tempMessageHandler);
+
+          // Create transport and client handler
+          const transport = new NodeWebSocketTransport(ws);
           client = new ClientHandler<Defs, Ctx>(
-            ws,
+            transport,
             context,
             streamEndpoints,
             mutationEndpoints,
@@ -62,11 +64,9 @@ export function setupWebSocketServer<Defs extends RPCDefinition, Ctx = void>(
 
           // Process buffered messages
           for (const msg of messageBuffer) {
-            client.handleMessage(msg);
+            client.handleMessage(msg.toString());
           }
           messageBuffer.length = 0;
-
-          ws.on("close", () => client?.handleDisconnect());
         })
         .catch((err) => {
           console.error("Error creating context:", err);

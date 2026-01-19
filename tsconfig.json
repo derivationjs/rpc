@@ -5,7 +5,7 @@
     "emitDeclarationOnly": false,
     "noEmit": false,
     "target": "ES2017",
-    "lib": ["esnext"],
+    "lib": ["esnext", "webworker"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,

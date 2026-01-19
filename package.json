@@ -20,6 +20,18 @@
     "./iso": {
       "types": "./dist/iso.d.ts",
       "import": "./dist/iso.js"
+    },
+    "./worker": {
+      "types": "./dist/shared-worker-server.d.ts",
+      "import": "./dist/shared-worker-server.js"
+    },
+    "./client": {
+      "types": "./dist/shared-worker-client.d.ts",
+      "import": "./dist/shared-worker-client.js"
+    },
+    "./transport": {
+      "types": "./dist/transport.d.ts",
+      "import": "./dist/transport.js"
     }
   },
   "files": [

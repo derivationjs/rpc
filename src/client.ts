@@ -7,6 +7,7 @@ import type {
   RPCDefinition,
   MutationResult,
 } from "./stream-types";
+import { Transport } from "./transport";
 
 function changer<T extends object, I extends object>(
   sink: Sink<T, I>,
@@ -60,14 +61,14 @@ export class Client<Defs extends RPCDefinition> {
   }
 
   constructor(
-    private ws: WebSocket,
+    private transport: Transport,
     private sinks: StreamSinks<Defs["streams"]>,
     private graph: Graph,
   ) {
-    this.ws.onmessage = (event) => {
-      const message = JSON.parse(event.data) as ServerMessage;
+    this.transport.onMessage((data: string) => {
+      const message = JSON.parse(data) as ServerMessage;
       this.handleMessage(message);
-    };
+    });
     this.resetHeartbeat();
     this.resetInactivity();
   }
@@ -122,7 +123,7 @@ export class Client<Defs extends RPCDefinition> {
 
   private sendMessage(message: ClientMessage) {
     this.resetHeartbeat();
-    this.ws.send(JSON.stringify(message));
+    this.transport.send(JSON.stringify(message));
   }
 
   async run<Key extends keyof Defs["streams"]>(
@@ -179,7 +180,7 @@ export class Client<Defs extends RPCDefinition> {
     clearTimeout(this.heartbeatTimeout);
     clearTimeout(this.inactivityTimeout);
     try {
-      this.ws.close();
+      this.transport.close();
     } catch {}
   }
 

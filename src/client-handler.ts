@@ -1,4 +1,3 @@
-import { RawData, WebSocket } from "ws";
 import { parseClientMessage, ClientMessage } from "./client-message";
 import { ServerMessage } from "./server-message";
 import {
@@ -9,9 +8,10 @@ import {
 } from "./stream-types";
 import { RateLimiter } from "./rate-limiter";
 import { PresenceHandler } from "./presence-manager";
+import { Transport } from "./transport";
 
 export class ClientHandler<Defs extends RPCDefinition, Ctx = void> {
-  private readonly ws: WebSocket;
+  private readonly transport: Transport;
   private readonly context: Ctx;
   private readonly streamEndpoints: StreamEndpoints<Defs["streams"], Ctx>;
   private readonly mutationEndpoints: MutationEndpoints<Defs["mutations"], Ctx>;
@@ -24,13 +24,13 @@ export class ClientHandler<Defs extends RPCDefinition, Ctx = void> {
   private readonly rateLimiter: RateLimiter;
 
   constructor(
-    ws: WebSocket,
+    transport: Transport,
     context: Ctx,
     streamEndpoints: StreamEndpoints<Defs["streams"], Ctx>,
     mutationEndpoints: MutationEndpoints<Defs["mutations"], Ctx>,
     presenceHandler?: PresenceHandler,
   ) {
-    this.ws = ws;
+    this.transport = transport;
     this.context = context;
     this.streamEndpoints = streamEndpoints;
     this.mutationEndpoints = mutationEndpoints;
@@ -38,6 +38,10 @@ export class ClientHandler<Defs extends RPCDefinition, Ctx = void> {
     this.rateLimiter = new RateLimiter(100, 300); // 100 messages over 5 minutes
 
     console.log("new client connected");
+
+    // Set up transport handlers
+    this.transport.onMessage((data: string) => this.handleMessage(data));
+    this.transport.onClose(() => this.handleDisconnect());
 
     this.resetHeartbeat();
     this.resetInactivity();
@@ -63,7 +67,7 @@ export class ClientHandler<Defs extends RPCDefinition, Ctx = void> {
     }, 30_000);
   }
 
-  handleMessage(message: RawData) {
+  handleMessage(message: string) {
     this.resetInactivity();
 
     // Check rate limit
@@ -75,9 +79,9 @@ export class ClientHandler<Defs extends RPCDefinition, Ctx = void> {
 
     let data: object;
     try {
-      data = JSON.parse(message.toString());
+      data = JSON.parse(message);
     } catch {
-      console.error("Invalid JSON received:", message.toString());
+      console.error("Invalid JSON received:", message);
       return this.close();
     }
 
@@ -209,14 +213,18 @@ export class ClientHandler<Defs extends RPCDefinition, Ctx = void> {
     this.resetHeartbeat();
 
     if (!this.closed) {
-      if (this.ws.bufferedAmount > 100 * 1024) {
+      // Check buffer if available (WebSocket provides this, MessagePort doesn't)
+      if (
+        this.transport.bufferedAmount !== undefined &&
+        this.transport.bufferedAmount > 100 * 1024
+      ) {
         console.log("Send buffer exceeded 100KB, closing connection");
         this.close();
         return;
       }
 
       try {
-        this.ws.send(JSON.stringify(message));
+        this.transport.send(JSON.stringify(message));
       } catch (err) {
         console.error("Failed to send message:", err);
         this.close();
@@ -224,7 +232,7 @@ export class ClientHandler<Defs extends RPCDefinition, Ctx = void> {
     }
   }
 
-  handleDisconnect() {
+  private handleDisconnect() {
     console.log("client disconnected");
     this.close();
   }
@@ -240,7 +248,7 @@ export class ClientHandler<Defs extends RPCDefinition, Ctx = void> {
     }
 
     try {
-      this.ws.close();
+      this.transport.close();
     } catch {}
   }
 }
