@@ -6,7 +6,7 @@ import WeakList from "./weak-list";
 import { StreamEndpoints, MutationEndpoints, RPCDefinition } from "./stream-types";
 import { Graph } from "derivation";
 import { PresenceHandler } from "./presence-manager";
-import { NodeWebSocketTransport } from "./websocket-transport";
+import { NodeWebSocketTransport } from "./node-web-socket-transport";
 
 export type WebSocketServerOptions<Ctx> = {
   createContext: (ws: WebSocket, req: IncomingMessage) => Ctx | Promise<Ctx>;

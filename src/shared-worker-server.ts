@@ -1,5 +1,5 @@
 import { Graph } from "derivation";
-import { ClientHandler } from "./client-handler";
+import { SharedWorkerClientHandler } from "./shared-worker-client-handler";
 import WeakList from "./weak-list";
 import {
   StreamEndpoints,
@@ -43,7 +43,7 @@ export function setupSharedWorker<Defs extends RPCDefinition, Ctx = void>(
   const { streams, mutations, createContext, presenceHandler } = options;
 
   const graph = new Graph();
-  const clients = new WeakList<ClientHandler<Defs, Ctx>>();
+  const clients = new WeakList<SharedWorkerClientHandler<Defs, Ctx>>();
 
   // After each graph step, broadcast deltas to all connected clients
   graph.afterStep(() => {
@@ -57,7 +57,7 @@ export function setupSharedWorker<Defs extends RPCDefinition, Ctx = void>(
   globalScope.onconnect = (event: MessageEvent) => {
     const port = event.ports[0];
     const messageBuffer: string[] = [];
-    let client: ClientHandler<Defs, Ctx> | null = null;
+    let client: SharedWorkerClientHandler<Defs, Ctx> | null = null;
 
     // Set up temporary message handler to buffer messages
     const tempMessageHandler = (e: MessageEvent) => {
@@ -70,7 +70,7 @@ export function setupSharedWorker<Defs extends RPCDefinition, Ctx = void>(
       .then((context) => {
         // Create transport and client handler
         const transport = new MessagePortTransport(port);
-        client = new ClientHandler<Defs, Ctx>(
+        client = new SharedWorkerClientHandler<Defs, Ctx>(
           transport,
           context,
           streams,

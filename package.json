@@ -32,6 +32,14 @@
     "./transport": {
       "types": "./dist/transport.d.ts",
       "import": "./dist/transport.js"
+    },
+    "./browser": {
+      "types": "./dist/web-socket-transport.d.ts",
+      "import": "./dist/web-socket-transport.js"
+    },
+    "./server": {
+      "types": "./dist/web-socket-server.d.ts",
+      "import": "./dist/web-socket-server.js"
     }
   },
   "files": [
