@@ -39,10 +39,10 @@ export type SharedWorkerServerOptions<
  */
 export function setupSharedWorker<Defs extends RPCDefinition, Ctx = void>(
   options: SharedWorkerServerOptions<Defs, Ctx>,
-): { graph: Graph } {
+  graph: Graph,
+) {
   const { streams, mutations, createContext, presenceHandler } = options;
 
-  const graph = new Graph();
   const clients = new WeakList<SharedWorkerClientHandler<Defs, Ctx>>();
 
   // After each graph step, broadcast deltas to all connected clients
@@ -93,6 +93,4 @@ export function setupSharedWorker<Defs extends RPCDefinition, Ctx = void>(
         port.close();
       });
   };
-
-  return { graph };
 }
