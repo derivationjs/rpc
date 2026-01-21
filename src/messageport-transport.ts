@@ -1,4 +1,4 @@
-import { Transport } from "./transport";
+import { Transport } from "./transport.js";
 
 /**
  * Transport implementation for MessagePort (SharedWorker communication).

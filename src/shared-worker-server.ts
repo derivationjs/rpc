@@ -1,13 +1,13 @@
 import { Graph } from "derivation";
-import { SharedWorkerClientHandler } from "./shared-worker-client-handler";
-import WeakList from "./weak-list";
+import { SharedWorkerClientHandler } from "./shared-worker-client-handler.js";
+import WeakList from "./weak-list.js";
 import {
   StreamEndpoints,
   MutationEndpoints,
   RPCDefinition,
-} from "./stream-types";
-import { PresenceHandler } from "./presence-manager";
-import { MessagePortTransport } from "./messageport-transport";
+} from "./stream-types.js";
+import { PresenceHandler } from "./presence-manager.js";
+import { MessagePortTransport } from "./messageport-transport.js";
 
 export type SharedWorkerServerOptions<
   Defs extends RPCDefinition,

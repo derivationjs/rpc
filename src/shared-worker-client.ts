@@ -1,7 +1,7 @@
 import { Graph } from "derivation";
-import { Client } from "./client";
-import { MessagePortTransport } from "./messageport-transport";
-import { StreamSinks, RPCDefinition } from "./stream-types";
+import { Client } from "./client.js";
+import { MessagePortTransport } from "./messageport-transport.js";
+import { StreamSinks, RPCDefinition } from "./stream-types.js";
 
 /**
  * Create a client connected to a SharedWorker.

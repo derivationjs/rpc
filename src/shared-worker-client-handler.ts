@@ -1,13 +1,13 @@
-import { parseClientMessage, ClientMessage } from "./client-message";
-import { ServerMessage } from "./server-message";
+import { parseClientMessage, ClientMessage } from "./client-message.js";
+import { ServerMessage } from "./server-message.js";
 import {
   Source,
   StreamEndpoints,
   MutationEndpoints,
   RPCDefinition,
-} from "./stream-types";
-import { PresenceHandler } from "./presence-manager";
-import { Transport } from "./transport";
+} from "./stream-types.js";
+import { PresenceHandler } from "./presence-manager.js";
+import { Transport } from "./transport.js";
 
 /**
  * Client handler for SharedWorker connections (browser-only).

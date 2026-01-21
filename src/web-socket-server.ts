@@ -1,12 +1,12 @@
 import { parse } from "url";
 import { Server, IncomingMessage } from "http";
 import { WebSocketServer, WebSocket, RawData } from "ws";
-import { ClientHandler } from "./client-handler";
-import WeakList from "./weak-list";
-import { StreamEndpoints, MutationEndpoints, RPCDefinition } from "./stream-types";
+import { ClientHandler } from "./client-handler.js";
+import WeakList from "./weak-list.js";
+import { StreamEndpoints, MutationEndpoints, RPCDefinition } from "./stream-types.js";
 import { Graph } from "derivation";
-import { PresenceHandler } from "./presence-manager";
-import { NodeWebSocketTransport } from "./node-web-socket-transport";
+import { PresenceHandler } from "./presence-manager.js";
+import { NodeWebSocketTransport } from "./node-web-socket-transport.js";
 
 export type WebSocketServerOptions<Ctx> = {
   createContext: (ws: WebSocket, req: IncomingMessage) => Ctx | Promise<Ctx>;

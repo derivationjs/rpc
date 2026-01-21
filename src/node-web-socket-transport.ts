@@ -1,5 +1,5 @@
 import { WebSocket, RawData } from "ws";
-import { Transport } from "./transport";
+import { Transport } from "./transport.js";
 
 /**
  * Transport implementation for Node.js WebSocket (server-side using 'ws' library).

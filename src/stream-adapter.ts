@@ -1,6 +1,6 @@
 import { Graph, ReactiveValue, Input, inputValue } from "derivation";
-import { Source, Sink } from "./stream-types";
-import { Iso } from "./iso";
+import { Source, Sink } from "./stream-types.js";
+import { Iso } from "./iso.js";
 
 export class StreamSourceAdapter<T extends object> implements Source<ReactiveValue<T>> {
   private readonly iso: Iso<T, object>;

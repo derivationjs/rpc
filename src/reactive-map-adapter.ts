@@ -6,8 +6,8 @@ import {
   ZMapChangeInput,
   inputMap,
 } from "@derivation/relational";
-import { Source, Sink } from "./stream-types";
-import { Iso, zmap } from "./iso";
+import { Source, Sink } from "./stream-types.js";
+import { Iso, zmap } from "./iso.js";
 
 export class ReactiveMapSourceAdapter<K, V>
   implements Source<ReactiveMap<K, V>>

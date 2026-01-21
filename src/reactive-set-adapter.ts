@@ -6,8 +6,8 @@ import {
   ZSetChangeInput,
   inputSet,
 } from "@derivation/relational";
-import { Source, Sink } from "./stream-types";
-import { Iso, zset, zsetToArray, compose } from "./iso";
+import { Source, Sink } from "./stream-types.js";
+import { Iso, zset, zsetToArray, compose } from "./iso.js";
 
 export class ReactiveSetSourceAdapter<T> implements Source<ReactiveSet<T>> {
   private readonly iso: Iso<ZSet<T>, [unknown, number][]>;

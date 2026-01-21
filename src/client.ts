@@ -1,13 +1,13 @@
-import { ClientMessage } from "./client-message";
-import { ServerMessage } from "./server-message";
+import { ClientMessage } from "./client-message.js";
+import { ServerMessage } from "./server-message.js";
 import type { Graph } from "derivation";
 import type {
   Sink,
   StreamSinks,
   RPCDefinition,
   MutationResult,
-} from "./stream-types";
-import { Transport } from "./transport";
+} from "./stream-types.js";
+import { Transport } from "./transport.js";
 
 function changer<T extends object, I extends object>(
   sink: Sink<T, I>,
