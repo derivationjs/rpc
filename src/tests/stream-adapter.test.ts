@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { Graph } from 'derivation';
+import { Graph, inputValue } from 'derivation';
 import { StreamSourceAdapter, StreamSinkAdapter, sink } from '../stream-adapter';
 import * as iso from '../iso';
 
 describe('StreamSourceAdapter', () => {
   it('should provide snapshot of the stream value', () => {
     const graph = new Graph();
-    const stream = graph.inputValue({ x: 10, y: 20 });
+    const stream = inputValue(graph,{ x: 10, y: 20 });
     const adapter = new StreamSourceAdapter(stream, iso.id());
 
     expect(adapter.Snapshot).toEqual({ x: 10, y: 20 });
@@ -14,7 +14,7 @@ describe('StreamSourceAdapter', () => {
 
   it('should transform snapshot using isomorphism', () => {
     const graph = new Graph();
-    const stream = graph.inputValue({ count: 42 });
+    const stream = inputValue(graph,{ count: 42 });
 
     const countToString: iso.Iso<{ count: number }, object> = {
       to: (obj) => ({ count: obj.count.toString() }),
@@ -27,7 +27,7 @@ describe('StreamSourceAdapter', () => {
 
   it('should provide last change as the current value', () => {
     const graph = new Graph();
-    const stream = graph.inputValue({ a: 1 });
+    const stream = inputValue(graph,{ a: 1 });
     const adapter = new StreamSourceAdapter(stream, iso.id());
 
     expect(adapter.LastChange).toEqual({ a: 1 });
@@ -39,7 +39,7 @@ describe('StreamSourceAdapter', () => {
 
   it('should return the underlying stream', () => {
     const graph = new Graph();
-    const stream = graph.inputValue({ test: true });
+    const stream = inputValue(graph,{ test: true });
     const adapter = new StreamSourceAdapter(stream, iso.id());
 
     expect(adapter.Stream).toBe(stream);

@@ -1,4 +1,4 @@
-import { Graph, ReactiveValue, Input } from "derivation";
+import { Graph, ReactiveValue, Input, inputValue } from "derivation";
 import { Source, Sink } from "./stream-types";
 import { Iso } from "./iso";
 
@@ -38,7 +38,7 @@ export class StreamSinkAdapter<T extends object> implements Sink<Input<T>, Input
   }
 
   build(): { stream: Input<T>; input: Input<T> } {
-    const stream = this.graph.inputValue(this.initialValue);
+    const stream = inputValue(this.graph, this.initialValue);
     return { stream, input: stream };
   }
 }

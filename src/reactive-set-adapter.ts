@@ -1,10 +1,11 @@
+import { Graph } from "derivation";
 import {
   ZSet,
-  Graph,
   ReactiveSet,
   ReactiveSetSource,
   ZSetChangeInput,
-} from "derivation";
+  inputSet,
+} from "@derivation/relational";
 import { Source, Sink } from "./stream-types";
 import { Iso, zset, zsetToArray, compose } from "./iso";
 
@@ -51,7 +52,7 @@ export class ReactiveSetSinkAdapter<T>
   }
 
   build(): { stream: ReactiveSetSource<T>; input: ZSetChangeInput<T> } {
-    const stream = this.graph.inputSet(this.initialSet);
+    const stream = inputSet(this.graph, this.initialSet);
     return { stream, input: stream.changes as ZSetChangeInput<T> };
   }
 }

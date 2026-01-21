@@ -1,5 +1,5 @@
 import { Record as ImmutableRecord, RecordOf } from "immutable";
-import { ZSet, ZMap } from "derivation";
+import { ZSet, ZMap } from "@derivation/relational";
 
 export interface Iso<In, Out> {
   to(x: In): Out;

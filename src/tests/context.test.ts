@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createServer, IncomingMessage } from 'http';
 import { WebSocket } from 'ws';
-import { Graph, Input } from 'derivation';
-import { setupWebSocketServer, StreamSourceAdapter, StreamEndpoints, MutationEndpoints, type RPCDefinition, type MutationResult } from '../index';
+import { Graph, Input, inputValue } from 'derivation';
+import { StreamSourceAdapter, type RPCDefinition, type MutationResult } from '../index';
+import { setupWebSocketServer, type StreamEndpoints, type MutationEndpoints } from '../web-socket-server';
 import { id } from '../iso';
 
 // Define test context type
@@ -45,7 +46,7 @@ describe('Context', () => {
       const streamEndpoints: StreamEndpoints<TestRPCDefinition['streams'], TestContext> = {
         testStream: async (args, ctx) => {
           receivedContexts.push(ctx);
-          const input = graph.inputValue({ value: `Hello from ${ctx.userId}` });
+          const input = inputValue(graph,{ value: `Hello from ${ctx.userId}` });
           return new StreamSourceAdapter(input, id());
         },
       };
@@ -251,7 +252,7 @@ describe('Context', () => {
     const streamEndpoints: StreamEndpoints<TestRPCDefinition['streams'], TestContext> = {
       testStream: async (args, ctx) => {
         capturedContext = ctx;
-        const input = newGraph.inputValue({ value: 'test' });
+        const input = inputValue(newGraph,{ value: 'test' });
         return new StreamSourceAdapter(input, id());
       },
     };

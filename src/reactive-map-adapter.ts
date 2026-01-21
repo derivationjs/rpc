@@ -1,10 +1,11 @@
+import { Graph } from "derivation";
 import {
   ZMap,
-  Graph,
   ReactiveMap,
   ReactiveMapSource,
   ZMapChangeInput,
-} from "derivation";
+  inputMap,
+} from "@derivation/relational";
 import { Source, Sink } from "./stream-types";
 import { Iso, zmap } from "./iso";
 
@@ -60,7 +61,7 @@ export class ReactiveMapSinkAdapter<K, V>
   }
 
   build(): { stream: ReactiveMapSource<K, V>; input: ZMapChangeInput<K, V> } {
-    const stream = this.graph.inputMap(this.initialMap);
+    const stream = inputMap(this.graph, this.initialMap);
     return { stream, input: stream.changes as ZMapChangeInput<K, V> };
   }
 }

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Graph, ZSet } from 'derivation';
+import { Graph } from 'derivation';
+import { ZSet, inputSet } from '@derivation/relational';
 import { ReactiveSetSourceAdapter, ReactiveSetSinkAdapter, sink } from '../reactive-set-adapter';
 import * as iso from '../iso';
 
@@ -8,7 +9,7 @@ describe('ReactiveSetSourceAdapter', () => {
     const graph = new Graph();
     let zset = new ZSet<string>();
     zset = zset.add('a', 1).add('b', 2);
-    const reactiveSet = graph.inputSet(zset);
+    const reactiveSet = inputSet(graph,zset);
 
     const adapter = new ReactiveSetSourceAdapter(reactiveSet, iso.id<string>());
 
@@ -20,7 +21,7 @@ describe('ReactiveSetSourceAdapter', () => {
     const graph = new Graph();
     let zset = new ZSet<number>();
     zset = zset.add(1, 2).add(3, 4);
-    const reactiveSet = graph.inputSet(zset);
+    const reactiveSet = inputSet(graph,zset);
 
     const numToString: iso.Iso<number, string> = {
       to: (n) => n.toString(),
@@ -35,7 +36,7 @@ describe('ReactiveSetSourceAdapter', () => {
 
   it('should provide last change after modifications', () => {
     const graph = new Graph();
-    const reactiveSet = graph.inputSet(new ZSet<string>());
+    const reactiveSet = inputSet(graph,new ZSet<string>());
 
     const adapter = new ReactiveSetSourceAdapter(reactiveSet, iso.id<string>());
 
@@ -51,7 +52,7 @@ describe('ReactiveSetSourceAdapter', () => {
 
   it('should return the underlying reactive set', () => {
     const graph = new Graph();
-    const reactiveSet = graph.inputSet(new ZSet<number>());
+    const reactiveSet = inputSet(graph,new ZSet<number>());
     const adapter = new ReactiveSetSourceAdapter(reactiveSet, iso.id<number>());
 
     expect(adapter.Stream).toBe(reactiveSet);
@@ -59,7 +60,7 @@ describe('ReactiveSetSourceAdapter', () => {
 
   it('should handle empty sets', () => {
     const graph = new Graph();
-    const reactiveSet = graph.inputSet(new ZSet<string>());
+    const reactiveSet = inputSet(graph,new ZSet<string>());
     const adapter = new ReactiveSetSourceAdapter(reactiveSet, iso.id<string>());
 
     expect(adapter.Snapshot).toEqual([]);
@@ -191,8 +192,8 @@ describe('sink function', () => {
     const { stream: source1 } = sinkAdapter.build();
     const { stream: source2 } = sinkAdapter.build();
 
-    // Each build creates a new instance
-    expect(source1).not.toBe(source2);
+    // Each build creates a new instance - use strict equality to avoid vitest's deep comparison
+    expect(source1 === source2).toBe(false);
     // But both have the same initial snapshot
     expect([...source1.snapshot.getEntries()]).toEqual([['test', 1]]);
     expect([...source2.snapshot.getEntries()]).toEqual([['test', 1]]);

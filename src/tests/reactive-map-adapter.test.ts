@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Graph, ZMap } from 'derivation';
+import { Graph } from 'derivation';
+import { ZMap, inputMap } from '@derivation/relational';
 import { ReactiveMapSourceAdapter, ReactiveMapSinkAdapter, sink } from '../reactive-map-adapter';
 import * as iso from '../iso';
 
@@ -8,7 +9,7 @@ describe('ReactiveMapSourceAdapter', () => {
     const graph = new Graph();
     let zmap = new ZMap<string, number>();
     zmap = zmap.add('a', 1, 10).add('b', 2, 20);
-    const reactiveMap = graph.inputMap(zmap);
+    const reactiveMap = inputMap(graph,zmap);
 
     const adapter = new ReactiveMapSourceAdapter(
       reactiveMap,
@@ -24,7 +25,7 @@ describe('ReactiveMapSourceAdapter', () => {
     const graph = new Graph();
     let zmap = new ZMap<number, number>();
     zmap = zmap.add(1, 10, 5).add(2, 20, 15);
-    const reactiveMap = graph.inputMap(zmap);
+    const reactiveMap = inputMap(graph,zmap);
 
     const numToString: iso.Iso<number, string> = {
       to: (n) => n.toString(),
@@ -43,7 +44,7 @@ describe('ReactiveMapSourceAdapter', () => {
 
   it('should provide last change after modifications', () => {
     const graph = new Graph();
-    const reactiveMap = graph.inputMap(new ZMap<string, string>());
+    const reactiveMap = inputMap(graph,new ZMap<string, string>());
 
     const adapter = new ReactiveMapSourceAdapter(
       reactiveMap,
@@ -63,7 +64,7 @@ describe('ReactiveMapSourceAdapter', () => {
 
   it('should return the underlying reactive map', () => {
     const graph = new Graph();
-    const reactiveMap = graph.inputMap(new ZMap<string, number>());
+    const reactiveMap = inputMap(graph,new ZMap<string, number>());
 
     const adapter = new ReactiveMapSourceAdapter(
       reactiveMap,
@@ -76,7 +77,7 @@ describe('ReactiveMapSourceAdapter', () => {
 
   it('should handle empty maps', () => {
     const graph = new Graph();
-    const reactiveMap = graph.inputMap(new ZMap<string, string>());
+    const reactiveMap = inputMap(graph,new ZMap<string, string>());
 
     const adapter = new ReactiveMapSourceAdapter(
       reactiveMap,
@@ -248,8 +249,8 @@ describe('sink function', () => {
     const { stream: source1 } = sinkAdapter.build();
     const { stream: source2 } = sinkAdapter.build();
 
-    // Each build creates a new instance
-    expect(source1).not.toBe(source2);
+    // Each build creates a new instance - use strict equality to avoid vitest's deep comparison
+    expect(source1 === source2).toBe(false);
     // But both have the same initial snapshot
     expect([...source1.snapshot.getEntries()]).toEqual([['test', 1, 1]]);
     expect([...source2.snapshot.getEntries()]).toEqual([['test', 1, 1]]);

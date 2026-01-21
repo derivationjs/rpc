@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Record as ImmutableRecord } from 'immutable';
-import { ZSet, ZMap } from 'derivation';
+import { ZSet, ZMap } from '@derivation/relational';
 import * as iso from '../iso';
 
 describe('iso', () => {
