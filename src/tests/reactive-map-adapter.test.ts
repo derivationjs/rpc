@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Graph } from 'derivation';
-import { ZMap, inputMap } from '@derivation/relational';
+import { ZMap, Reactive, ZMapOperations, ZMapChangeInput } from '@derivation/composable';
 import { ReactiveMapSourceAdapter, ReactiveMapSinkAdapter, sink } from '../reactive-map-adapter';
 import * as iso from '../iso';
 
@@ -9,7 +9,7 @@ describe('ReactiveMapSourceAdapter', () => {
     const graph = new Graph();
     let zmap = new ZMap<string, number>();
     zmap = zmap.add('a', 1, 10).add('b', 2, 20);
-    const reactiveMap = inputMap(graph,zmap);
+    const reactiveMap = Reactive.create(graph, new ZMapOperations<string, number>(), new ZMapChangeInput<string, number>(graph), zmap);
 
     const adapter = new ReactiveMapSourceAdapter(
       reactiveMap,
@@ -25,7 +25,7 @@ describe('ReactiveMapSourceAdapter', () => {
     const graph = new Graph();
     let zmap = new ZMap<number, number>();
     zmap = zmap.add(1, 10, 5).add(2, 20, 15);
-    const reactiveMap = inputMap(graph,zmap);
+    const reactiveMap = Reactive.create(graph, new ZMapOperations<number, number>(), new ZMapChangeInput<number, number>(graph), zmap);
 
     const numToString: iso.Iso<number, string> = {
       to: (n) => n.toString(),
@@ -44,7 +44,8 @@ describe('ReactiveMapSourceAdapter', () => {
 
   it('should provide last change after modifications', () => {
     const graph = new Graph();
-    const reactiveMap = inputMap(graph,new ZMap<string, string>());
+    const input = new ZMapChangeInput<string, string>(graph);
+    const reactiveMap = Reactive.create(graph, new ZMapOperations<string, string>(), input, new ZMap<string, string>());
 
     const adapter = new ReactiveMapSourceAdapter(
       reactiveMap,
@@ -53,9 +54,7 @@ describe('ReactiveMapSourceAdapter', () => {
     );
 
     // Push a change
-    let zmap = new ZMap<string, string>();
-    zmap = zmap.add('key', 'value', 1);
-    reactiveMap.add('key', 'value', 1);
+    input.add('key', 'value', 1);
     graph.step();
 
     const lastChange = adapter.LastChange as Array<[string, string, number]>;
@@ -64,7 +63,7 @@ describe('ReactiveMapSourceAdapter', () => {
 
   it('should return the underlying reactive map', () => {
     const graph = new Graph();
-    const reactiveMap = inputMap(graph,new ZMap<string, number>());
+    const reactiveMap = Reactive.create(graph, new ZMapOperations<string, number>(), new ZMapChangeInput<string, number>(graph), new ZMap<string, number>());
 
     const adapter = new ReactiveMapSourceAdapter(
       reactiveMap,
@@ -77,7 +76,7 @@ describe('ReactiveMapSourceAdapter', () => {
 
   it('should handle empty maps', () => {
     const graph = new Graph();
-    const reactiveMap = inputMap(graph,new ZMap<string, string>());
+    const reactiveMap = Reactive.create(graph, new ZMapOperations<string, string>(), new ZMapChangeInput<string, string>(graph), new ZMap<string, string>());
 
     const adapter = new ReactiveMapSourceAdapter(
       reactiveMap,

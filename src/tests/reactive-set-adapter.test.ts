@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Graph } from 'derivation';
-import { ZSet, inputSet } from '@derivation/relational';
+import { ZSet, Reactive, ZSetOperations, ZSetChangeInput } from '@derivation/composable';
 import { ReactiveSetSourceAdapter, ReactiveSetSinkAdapter, sink } from '../reactive-set-adapter';
 import * as iso from '../iso';
 
@@ -9,7 +9,7 @@ describe('ReactiveSetSourceAdapter', () => {
     const graph = new Graph();
     let zset = new ZSet<string>();
     zset = zset.add('a', 1).add('b', 2);
-    const reactiveSet = inputSet(graph,zset);
+    const reactiveSet = Reactive.create(graph, new ZSetOperations<string>(), new ZSetChangeInput<string>(graph),zset);
 
     const adapter = new ReactiveSetSourceAdapter(reactiveSet, iso.id<string>());
 
@@ -21,7 +21,7 @@ describe('ReactiveSetSourceAdapter', () => {
     const graph = new Graph();
     let zset = new ZSet<number>();
     zset = zset.add(1, 2).add(3, 4);
-    const reactiveSet = inputSet(graph,zset);
+    const reactiveSet = Reactive.create(graph, new ZSetOperations<number>(), new ZSetChangeInput<number>(graph), zset);
 
     const numToString: iso.Iso<number, string> = {
       to: (n) => n.toString(),
@@ -36,14 +36,15 @@ describe('ReactiveSetSourceAdapter', () => {
 
   it('should provide last change after modifications', () => {
     const graph = new Graph();
-    const reactiveSet = inputSet(graph,new ZSet<string>());
+    const input = new ZSetChangeInput<string>(graph);
+    const reactiveSet = Reactive.create(graph, new ZSetOperations<string>(), input, new ZSet<string>());
 
     const adapter = new ReactiveSetSourceAdapter(reactiveSet, iso.id<string>());
 
     // Push a change
     let zset = new ZSet<string>();
     zset = zset.add('x', 1);
-    reactiveSet.push(zset);
+    input.push(zset);
     graph.step();
 
     const lastChange = adapter.LastChange as Array<[string, number]>;
@@ -52,7 +53,7 @@ describe('ReactiveSetSourceAdapter', () => {
 
   it('should return the underlying reactive set', () => {
     const graph = new Graph();
-    const reactiveSet = inputSet(graph,new ZSet<number>());
+    const reactiveSet = Reactive.create(graph, new ZSetOperations<number>(), new ZSetChangeInput<number>(graph), new ZSet<number>());
     const adapter = new ReactiveSetSourceAdapter(reactiveSet, iso.id<number>());
 
     expect(adapter.Stream).toBe(reactiveSet);
@@ -60,7 +61,7 @@ describe('ReactiveSetSourceAdapter', () => {
 
   it('should handle empty sets', () => {
     const graph = new Graph();
-    const reactiveSet = inputSet(graph,new ZSet<string>());
+    const reactiveSet = Reactive.create(graph, new ZSetOperations<string>(), new ZSetChangeInput<string>(graph),new ZSet<string>());
     const adapter = new ReactiveSetSourceAdapter(reactiveSet, iso.id<string>());
 
     expect(adapter.Snapshot).toEqual([]);

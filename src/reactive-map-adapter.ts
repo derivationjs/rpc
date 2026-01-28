@@ -1,21 +1,15 @@
 import { Graph } from "derivation";
-import {
-  ZMap,
-  ReactiveMap,
-  ReactiveMapSource,
-  ZMapChangeInput,
-  inputMap,
-} from "@derivation/relational";
+import { ZMap, Reactive, ZMapOperations, ZMapChangeInput } from "@derivation/composable";
 import { Source, Sink } from "./stream-types.js";
 import { Iso, zmap } from "./iso.js";
 
 export class ReactiveMapSourceAdapter<K, V>
-  implements Source<ReactiveMap<K, V>>
+  implements Source<Reactive<ZMap<K, V>>>
 {
   private readonly iso: Iso<ZMap<K, V>, [unknown, unknown, unknown][]>;
 
   constructor(
-    private readonly map: ReactiveMap<K, V>,
+    private readonly map: Reactive<ZMap<K, V>>,
     keyIso: Iso<K, unknown>,
     valueIso: Iso<V, unknown>,
   ) {
@@ -27,18 +21,18 @@ export class ReactiveMapSourceAdapter<K, V>
   }
 
   get LastChange(): object | null {
-    const change = this.iso.to(this.map.changes.value);
+    const change = this.iso.to(this.map.changes.value as ZMap<K, V>);
     if (change.length === 0) return null;
     return change;
   }
 
-  get Stream(): ReactiveMap<K, V> {
+  get Stream(): Reactive<ZMap<K, V>> {
     return this.map;
   }
 }
 
 export class ReactiveMapSinkAdapter<K, V>
-  implements Sink<ReactiveMapSource<K, V>, ZMapChangeInput<K, V>>
+  implements Sink<Reactive<ZMap<K, V>>, ZMapChangeInput<K, V>>
 {
   private readonly iso: Iso<ZMap<K, V>, object>;
   private readonly initialMap: ZMap<K, V>;
@@ -60,9 +54,10 @@ export class ReactiveMapSinkAdapter<K, V>
     }
   }
 
-  build(): { stream: ReactiveMapSource<K, V>; input: ZMapChangeInput<K, V> } {
-    const stream = inputMap(this.graph, this.initialMap);
-    return { stream, input: stream.changes as ZMapChangeInput<K, V> };
+  build(): { stream: Reactive<ZMap<K, V>>; input: ZMapChangeInput<K, V> } {
+    const input = new ZMapChangeInput<K, V>(this.graph);
+    const stream = Reactive.create(this.graph, new ZMapOperations<K, V>(), input, this.initialMap);
+    return { stream, input };
   }
 }
 
@@ -70,7 +65,7 @@ export function sink<K, V>(
   graph: Graph,
   keyIso: Iso<K, unknown>,
   valueIso: Iso<V, unknown>,
-): (snapshot: object) => Sink<ReactiveMapSource<K, V>, ZMapChangeInput<K, V>> {
+): (snapshot: object) => Sink<Reactive<ZMap<K, V>>, ZMapChangeInput<K, V>> {
   return (snapshot: object) => {
     return new ReactiveMapSinkAdapter<K, V>(graph, keyIso, valueIso, snapshot);
   };

@@ -1,6 +1,6 @@
 {
   "name": "@derivation/rpc",
-  "version": "0.3.0",
+  "version": "0.3.3",
   "homepage": "https://github.com/derivationjs/rpc",
   "repository": {
     "type": "git",
@@ -52,10 +52,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@types/node": "^25.0.10",
+    "@derivation/composable": "^0.3.3",
+    "@types/node": "^25.1.0",
     "@types/ws": "^8.18.1",
     "derivation": "^0.3.0",
-    "@derivation/relational": "^0.3.0",
     "immutable": "^5.1.4",
     "ws": "^8.19.0",
     "zod": "^4.3.6"
