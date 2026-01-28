@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Record as ImmutableRecord } from 'immutable';
 import { ZSet, ZMap } from '@derivation/composable';
-import * as iso from '../iso';
+import * as iso from '../iso.js';
 
 describe('iso', () => {
   describe('id', () => {
@@ -169,14 +169,14 @@ describe('iso', () => {
         age: numToString,
       });
 
-      const plain = { name: 'Charlie', age: 35 };
-      const record = recordIso.from(plain);
+      const serialized = { name: 'Charlie', age: '35' };
+      const record = recordIso.from(serialized);
 
       expect(record.get('name')).toBe('Charlie');
       expect(record.get('age')).toBe(35);
 
-      const serialized = recordIso.to(record);
-      expect(serialized).toEqual({ name: 'Charlie', age: '35' });
+      const backToSerialized = recordIso.to(record);
+      expect(backToSerialized).toEqual({ name: 'Charlie', age: '35' });
     });
   });
 

@@ -5,13 +5,13 @@ import {
   SubscribeMessageSchema,
   UnsubscribeMessageSchema,
   HeartbeatMessageSchema as ClientHeartbeatMessageSchema,
-} from '../client-message';
+} from '../client-message.js';
 import {
   ServerMessage,
   HeartbeatMessageSchema as ServerHeartbeatMessageSchema,
   SubscribedSchema,
   DeltaMessageSchema,
-} from '../server-message';
+} from '../server-message.js';
 
 describe('ClientMessage', () => {
   describe('subscribe', () => {

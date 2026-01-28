@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { Graph } from 'derivation';
 import { ZSet, Reactive, ZSetOperations, ZSetChangeInput } from '@derivation/composable';
-import { ReactiveSetSourceAdapter, ReactiveSetSinkAdapter, sink } from '../reactive-set-adapter';
-import * as iso from '../iso';
+import { ReactiveSetSourceAdapter, ReactiveSetSinkAdapter, sink } from '../reactive-set-adapter.js';
+import * as iso from '../iso.js';
 
 describe('ReactiveSetSourceAdapter', () => {
   it('should provide snapshot as array of [item, weight] tuples', () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Graph, inputValue } from 'derivation';
-import { StreamSourceAdapter, StreamSinkAdapter, sink } from '../stream-adapter';
-import * as iso from '../iso';
+import { StreamSourceAdapter, StreamSinkAdapter, sink } from '../stream-adapter.js';
+import * as iso from '../iso.js';
 
 describe('StreamSourceAdapter', () => {
   it('should provide snapshot of the stream value', () => {

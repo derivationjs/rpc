@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { Graph } from 'derivation';
 import { ZMap, Reactive, ZMapOperations, ZMapChangeInput } from '@derivation/composable';
-import { ReactiveMapSourceAdapter, ReactiveMapSinkAdapter, sink } from '../reactive-map-adapter';
-import * as iso from '../iso';
+import { ReactiveMapSourceAdapter, ReactiveMapSinkAdapter, sink } from '../reactive-map-adapter.js';
+import * as iso from '../iso.js';
 
 describe('ReactiveMapSourceAdapter', () => {
   it('should provide snapshot as array of [key, value, weight] tuples', () => {

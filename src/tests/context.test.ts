@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createServer, IncomingMessage } from 'http';
 import { WebSocket } from 'ws';
-import { Graph, Input, inputValue } from 'derivation';
-import { StreamSourceAdapter, type RPCDefinition, type MutationResult } from '../index';
-import { setupWebSocketServer, type StreamEndpoints, type MutationEndpoints } from '../web-socket-server';
-import { id } from '../iso';
+import { Graph, Input, inputValue, ReactiveValue } from 'derivation';
+import { StreamSourceAdapter, type RPCDefinition, type MutationResult, type StreamEndpoints, type MutationEndpoints } from '../index.js';
+import { setupWebSocketServer } from '../web-socket-server.js';
+import { id } from '../iso.js';
 
 // Define test context type
 type TestContext = {
@@ -13,11 +13,11 @@ type TestContext = {
 };
 
 // Define test RPC
-type TestRPCDefinition = RPCDefinition & {
+type TestRPCDefinition = {
   streams: {
     testStream: {
       args: {};
-      returnType: Input<{ value: string }>;
+      returnType: ReactiveValue<{ value: string }>;
       sinkType: Input<{ value: string }>;
       inputType: Input<{ value: string }>;
     };
@@ -44,20 +44,20 @@ describe('Context', () => {
 
       // Create test endpoints that capture context
       const streamEndpoints: StreamEndpoints<TestRPCDefinition['streams'], TestContext> = {
-        testStream: async (args, ctx) => {
+        testStream: async (args: {}, ctx: TestContext) => {
           receivedContexts.push(ctx);
           const input = inputValue(graph,{ value: `Hello from ${ctx.userId}` });
-          return new StreamSourceAdapter(input, id());
+          return new StreamSourceAdapter(input, id<{ value: string }>());
         },
       };
 
       const mutationEndpoints: MutationEndpoints<TestRPCDefinition['mutations'], TestContext> = {
-        testMutation: async ({ input }, ctx): Promise<MutationResult<{ output: string; userId: string; role: string }>> => {
+        testMutation: async (args: { input: string }, ctx: TestContext) => {
           receivedContexts.push(ctx);
           return {
             success: true,
             value: {
-              output: `Processed: ${input}`,
+              output: `Processed: ${args.input}`,
               userId: ctx.userId,
               role: ctx.role,
             },
@@ -250,17 +250,17 @@ describe('Context', () => {
     let capturedContext: TestContext | null = null;
 
     const streamEndpoints: StreamEndpoints<TestRPCDefinition['streams'], TestContext> = {
-      testStream: async (args, ctx) => {
+      testStream: async (args: {}, ctx: TestContext) => {
         capturedContext = ctx;
         const input = inputValue(newGraph,{ value: 'test' });
-        return new StreamSourceAdapter(input, id());
+        return new StreamSourceAdapter(input, id<{ value: string }>());
       },
     };
 
     const mutationEndpoints: MutationEndpoints<TestRPCDefinition['mutations'], TestContext> = {
-      testMutation: async ({ input }, ctx) => ({
+      testMutation: async (args: { input: string }, ctx: TestContext) => ({
         success: true,
-        value: { output: input, userId: ctx.userId, role: ctx.role },
+        value: { output: args.input, userId: ctx.userId, role: ctx.role },
       }),
     };
 

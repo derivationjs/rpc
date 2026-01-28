@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import WeakList from '../weak-list';
+import WeakList from '../weak-list.js';
 
 describe('WeakList', () => {
   it('should store and iterate over objects', () => {

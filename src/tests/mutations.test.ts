@@ -3,11 +3,11 @@ import {
   ClientMessage,
   CallMessageSchema,
   parseClientMessage,
-} from '../client-message';
+} from '../client-message.js';
 import {
   ServerMessage,
   ResultMessageSchema,
-} from '../server-message';
+} from '../server-message.js';
 import type { MutationResult } from '../stream-types';
 
 describe('Mutation Messages', () => {

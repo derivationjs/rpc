@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Queue } from '../queue';
+import { Queue } from '../queue.js';
 
 describe('Queue', () => {
   it('should start empty', () => {
