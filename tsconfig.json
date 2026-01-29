@@ -14,7 +14,6 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "incremental": true,
   },
   "exports": {
     "./src/index.ts": "./dist/index.js",
