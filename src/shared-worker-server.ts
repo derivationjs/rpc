@@ -28,7 +28,7 @@ export type SharedWorkerServerOptions<
  * // worker.ts
  * const { graph } = setupSharedWorker({
  *   streams: {
- *     todos: async (args, ctx) => new ReactiveSetSourceAdapter(source),
+ *     todos: async (args, ctx) => new ReactiveSourceAdapter(source, iso),
  *   },
  *   mutations: {
  *     addTodo: async (args, ctx) => ({ success: true, value: newTodo }),
@@ -47,6 +47,7 @@ export function setupSharedWorker<Defs extends RPCDefinition, Ctx = void>(
 
   // After each graph step, broadcast deltas to all connected clients
   graph.afterStep(() => {
+    console.log("[SharedWorker] Broadcasting deltas to clients");
     for (const client of clients) {
       client.handleStep();
     }
@@ -55,12 +56,14 @@ export function setupSharedWorker<Defs extends RPCDefinition, Ctx = void>(
   // Handle SharedWorker connections
   const globalScope = self as unknown as SharedWorkerGlobalScope;
   globalScope.onconnect = (event: MessageEvent) => {
+    console.log("[SharedWorker] New client connecting...");
     const port = event.ports[0];
     const messageBuffer: string[] = [];
     let client: SharedWorkerClientHandler<Defs, Ctx> | null = null;
 
     // Set up temporary message handler to buffer messages
     const tempMessageHandler = (e: MessageEvent) => {
+      console.log("[SharedWorker] Buffering message during setup:", e.data);
       messageBuffer.push(e.data);
     };
     port.onmessage = tempMessageHandler;
@@ -68,6 +71,7 @@ export function setupSharedWorker<Defs extends RPCDefinition, Ctx = void>(
     // Create context (handle both sync and async)
     Promise.resolve(createContext(port))
       .then((context) => {
+        console.log("[SharedWorker] Context created, setting up client handler");
         // Create transport and client handler
         const transport = new MessagePortTransport(port);
         client = new SharedWorkerClientHandler<Defs, Ctx>(
@@ -78,8 +82,10 @@ export function setupSharedWorker<Defs extends RPCDefinition, Ctx = void>(
           presenceHandler,
         );
         clients.add(client);
+        console.log("[SharedWorker] Client handler registered");
 
         // Process buffered messages
+        console.log(`[SharedWorker] Processing ${messageBuffer.length} buffered messages`);
         for (const msg of messageBuffer) {
           client.handleMessage(msg);
         }
@@ -87,9 +93,10 @@ export function setupSharedWorker<Defs extends RPCDefinition, Ctx = void>(
 
         // Start the port
         port.start();
+        console.log("[SharedWorker] Client connection ready");
       })
       .catch((err) => {
-        console.error("Error creating context:", err);
+        console.error("[SharedWorker] Error creating context:", err);
         port.close();
       });
   };

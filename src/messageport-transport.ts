@@ -7,11 +7,13 @@ export class MessagePortTransport implements Transport {
   constructor(private port: MessagePort) {}
 
   send(data: string): void {
+    console.log("[MessagePortTransport] Sending:", data.substring(0, 100) + (data.length > 100 ? "..." : ""));
     this.port.postMessage(data);
   }
 
   onMessage(handler: (data: string) => void): void {
     this.port.onmessage = (event: MessageEvent) => {
+      console.log("[MessagePortTransport] Received:", event.data.substring(0, 100) + (event.data.length > 100 ? "..." : ""));
       handler(event.data);
     };
   }

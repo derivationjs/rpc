@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { Record as ImmutableRecord } from 'immutable';
-import { ZSet, ZMap } from '@derivation/composable';
 import * as iso from '../iso.js';
 
 describe('iso', () => {
@@ -76,39 +75,6 @@ describe('iso', () => {
     });
   });
 
-  describe('zset', () => {
-    it('should convert ZSet elements', () => {
-      const numToString: iso.Iso<number, string> = {
-        to: (n) => n.toString(),
-        from: (s) => parseInt(s, 10),
-      };
-      const zsetIso = iso.zset(numToString);
-
-      let inputZSet = new ZSet<number>();
-      inputZSet = inputZSet.add(1, 2).add(2, 3);
-
-      const outputZSet = zsetIso.to(inputZSet);
-      expect([...outputZSet.getEntries()]).toEqual([['1', 2], ['2', 3]]);
-
-      const roundTrip = zsetIso.from(outputZSet);
-      expect([...roundTrip.getEntries()]).toEqual([...inputZSet.getEntries()]);
-    });
-  });
-
-  describe('zsetToArray', () => {
-    it('should convert ZSet to array of [item, weight] tuples', () => {
-      const zsetToArrayIso = iso.zsetToArray<string>();
-
-      let zset = new ZSet<string>();
-      zset = zset.add('a', 1).add('b', 2);
-
-      const array = zsetToArrayIso.to(zset);
-      expect(array).toEqual([['a', 1], ['b', 2]]);
-
-      const backToZSet = zsetToArrayIso.from(array);
-      expect([...backToZSet.getEntries()]).toEqual([...zset.getEntries()]);
-    });
-  });
 
   describe('object', () => {
     it('should convert object properties', () => {
@@ -212,23 +178,4 @@ describe('iso', () => {
     });
   });
 
-  describe('zmap', () => {
-    it('should convert ZMap to array with weights', () => {
-      const numToString: iso.Iso<number, string> = {
-        to: (n) => n.toString(),
-        from: (s) => parseInt(s, 10),
-      };
-
-      const zmapIso = iso.zmap(numToString, iso.id<string>());
-
-      let zmap = new ZMap<number, string>();
-      zmap = zmap.add(1, 'one', 5).add(2, 'two', 3);
-
-      const array = zmapIso.to(zmap);
-      expect(array).toEqual([['1', 'one', 5], ['2', 'two', 3]]);
-
-      const backToZMap = zmapIso.from(array);
-      expect([...backToZMap.getEntries()]).toEqual([...zmap.getEntries()]);
-    });
-  });
 });

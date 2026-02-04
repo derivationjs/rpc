@@ -78,6 +78,7 @@ export class Client<Defs extends RPCDefinition> {
 
     switch (message.type) {
       case "snapshot": {
+        console.log(`[Client] Received snapshot for stream ${message.id}`);
         const resolve = this.pendingStreams.get(message.id);
         if (resolve) {
           resolve(message.snapshot as object);
@@ -86,6 +87,8 @@ export class Client<Defs extends RPCDefinition> {
         break;
       }
       case "delta": {
+        const changeCount = Object.keys(message.changes).length;
+        console.log(`[Client] Received delta with ${changeCount} changes for streams: ${Object.keys(message.changes).join(", ")}`);
         for (const [idStr, change] of Object.entries(message.changes)) {
           const id = Number(idStr);
           const sink = this.activeStreams.get(id);
@@ -98,10 +101,12 @@ export class Client<Defs extends RPCDefinition> {
             this.activeStreams.delete(id);
           }
         }
+        console.log("[Client] Stepping graph");
         this.graph.step();
         break;
       }
       case "result": {
+        console.log(`[Client] Received mutation result for call ${message.id}:`, message.success ? "success" : "error");
         const resolve = this.pendingMutations.get(message.id);
         if (resolve) {
           if (message.success) {
@@ -117,6 +122,7 @@ export class Client<Defs extends RPCDefinition> {
         break;
       }
       case "heartbeat":
+        console.log("[Client] Received heartbeat");
         break;
     }
   }

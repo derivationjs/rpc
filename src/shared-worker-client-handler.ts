@@ -173,6 +173,7 @@ export class SharedWorkerClientHandler<Defs extends RPCDefinition, Ctx = void> {
     }
 
     if (Object.keys(changes).length > 0) {
+      console.log(`[ClientHandler] Sending delta with ${Object.keys(changes).length} changes for streams: ${Object.keys(changes).join(", ")}`);
       this.sendMessage(ServerMessage.delta(changes));
     }
   }
@@ -188,12 +189,14 @@ export class SharedWorkerClientHandler<Defs extends RPCDefinition, Ctx = void> {
 
   close() {
     if (this.closed) return;
+    console.log("[ClientHandler] Closing client connection");
     this.closed = true;
 
     if (this.presenceHandler && this.currentPresence) {
       this.presenceHandler.remove(this.currentPresence);
     }
 
+    console.log(`[ClientHandler] Cleaning up ${this.streams.size} active streams`);
     this.streams.clear();
 
     try {

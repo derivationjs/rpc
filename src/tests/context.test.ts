@@ -83,7 +83,7 @@ describe('Context', () => {
         }
       );
 
-      server.listen(0, () => {
+      server.listen(0, '127.0.0.1', () => {
         const addr = server.address();
         if (addr && typeof addr === 'object') {
           port = addr.port;
@@ -279,7 +279,7 @@ describe('Context', () => {
     );
 
     const newPort = await new Promise<number>((resolve) => {
-      newServer.listen(0, () => {
+      newServer.listen(0, '127.0.0.1', () => {
         const addr = newServer.address();
         if (addr && typeof addr === 'object') {
           resolve(addr.port);

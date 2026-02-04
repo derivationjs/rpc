@@ -2,15 +2,10 @@
 export * from "./client.js";
 export * from "./stream-types.js";
 export {
-  ReactiveSetSourceAdapter,
-  ReactiveSetSinkAdapter,
-  sink as setSink,
-} from "./reactive-set-adapter.js";
-export {
-  ReactiveMapSourceAdapter,
-  ReactiveMapSinkAdapter,
-  sink as mapSink,
-} from "./reactive-map-adapter.js";
+  ReactiveSourceAdapter,
+  ReactiveSinkAdapter,
+  sink as reactiveSink,
+} from "./reactive-adapter.js";
 export {
   StreamSourceAdapter,
   StreamSinkAdapter,
